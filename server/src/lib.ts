@@ -1,17 +1,19 @@
+import WebSocket from "ws"
+
 const connections = new Map();
 const rooms = new Map();
+let roomCount:number = 1;
 
-let roomCount = 1;
-export const ConnectTheClient = (socket, num) => {
+export const ConnectTheClient = (socket:WebSocket, num:number) => {
   connections.set(`C${num}`, socket);
   return `C${num}`;
 };
 
-export const DisconnectTheClient = (clientId) => {
+export const DisconnectTheClient = (clientId:string) => {
   connections.delete(clientId);
 };
 
-export const createRoom = (host) => {
+export const createRoom = (host:string) => {
   const roomId = `Room${roomCount}`;
   roomCount = roomCount + 1;
   rooms.set(roomId, {
@@ -21,19 +23,19 @@ export const createRoom = (host) => {
   return roomId;
 };
 
-export const getRoom = (roomId) => {
+export const getRoom = (roomId:string) => {
   const room = rooms.get(roomId);
   if (!room) return;
   return { ...room, userCount: room.users.length };
 };
 
-export const joinRoom = (user, roomId) => {
+export const joinRoom = (user:string, roomId:string) => {
   const room = rooms.get(roomId);
   if (!room) return;
   const usersArray = room.users;
   if (usersArray.includes(user)) return;
   usersArray.push(user);
-  usersArray.forEach((u) => {
+  usersArray.forEach((u:string) => {
     const socket = connections.get(u);
     socket.send(
       JSON.stringify({
@@ -46,7 +48,7 @@ export const joinRoom = (user, roomId) => {
   return roomId;
 };
 
-export const leaveRoom = (user, roomId) => {
+export const leaveRoom = (user:string, roomId:string) => {
   const room = rooms.get(roomId);
   if (!room) return;
   const usersArray = room.users;
@@ -54,7 +56,7 @@ export const leaveRoom = (user, roomId) => {
   const userIndex = usersArray.indexOf(user);
   if (userIndex === -1) return;
   usersArray.splice(userIndex, 1);
-  usersArray.forEach((u) => {
+  usersArray.forEach((u:string) => {
     const socket = connections.get(u);
     socket.send(
       JSON.stringify({
@@ -66,12 +68,12 @@ export const leaveRoom = (user, roomId) => {
   });
 };
 
-export const chatOnRoom = (roomId, user, message) => {
+export const chatOnRoom = (roomId:string, user:string, message:string) => {
   const room = rooms.get(roomId);
   if (!room) return;
   const roomUsers = room.users;
   if (!roomUsers.includes(user)) return;
-  roomUsers.forEach((u) => {
+  roomUsers.forEach((u:string) => {
     const socket = connections.get(u);
     socket.send(
       JSON.stringify({
