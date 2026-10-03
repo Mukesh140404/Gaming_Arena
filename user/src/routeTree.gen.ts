@@ -11,8 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as protectedRouteRouteImport } from './routes/(protected)/route'
-import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as authAuthRouteImport } from './routes/(auth)/auth'
 import { Route as protectedIndexRouteImport } from './routes/(protected)/index'
+import { Route as protectedDashboardRouteImport } from './routes/(protected)/dashboard'
 
 const authRouteRoute = authRouteRouteImport.update({
   id: '/(auth)',
@@ -22,9 +23,9 @@ const protectedRouteRoute = protectedRouteRouteImport.update({
   id: '/(protected)',
   getParentRoute: () => rootRouteImport,
 } as any)
-const authLoginRoute = authLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const authAuthRoute = authAuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => authRouteRoute,
 } as any)
 const protectedIndexRoute = protectedIndexRouteImport.update({
@@ -32,29 +33,42 @@ const protectedIndexRoute = protectedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => protectedRouteRoute,
 } as any)
+const protectedDashboardRoute = protectedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => protectedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/login': typeof authLoginRoute
+  '/auth': typeof authAuthRoute
+  '/dashboard': typeof protectedDashboardRoute
   '/': typeof protectedIndexRoute
 }
 export interface FileRoutesByTo {
-  '/login': typeof authLoginRoute
+  '/auth': typeof authAuthRoute
+  '/dashboard': typeof protectedDashboardRoute
   '/': typeof protectedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(auth)': typeof authRouteRouteWithChildren
   '/(protected)': typeof protectedRouteRouteWithChildren
-  '/(auth)/login': typeof authLoginRoute
+  '/(auth)/auth': typeof authAuthRoute
+  '/(protected)/dashboard': typeof protectedDashboardRoute
   '/(protected)/': typeof protectedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/'
+  fullPaths: '/auth' | '/dashboard' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/'
+  to: '/auth' | '/dashboard' | '/'
   id:
-    '__root__' | '/(auth)' | '/(protected)' | '/(auth)/login' | '/(protected)/'
+    | '__root__'
+    | '/(auth)'
+    | '/(protected)'
+    | '/(auth)/auth'
+    | '/(protected)/dashboard'
+    | '/(protected)/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,11 +92,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof protectedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(auth)/login': {
-      id: '/(auth)/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof authLoginRouteImport
+    '/(auth)/auth': {
+      id: '/(auth)/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof authAuthRouteImport
       parentRoute: typeof authRouteRoute
     }
     '/(protected)/': {
@@ -92,15 +106,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof protectedIndexRouteImport
       parentRoute: typeof protectedRouteRoute
     }
+    '/(protected)/dashboard': {
+      id: '/(protected)/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof protectedDashboardRouteImport
+      parentRoute: typeof protectedRouteRoute
+    }
   }
 }
 
 interface authRouteRouteChildren {
-  authLoginRoute: typeof authLoginRoute
+  authAuthRoute: typeof authAuthRoute
 }
 
 const authRouteRouteChildren: authRouteRouteChildren = {
-  authLoginRoute: authLoginRoute,
+  authAuthRoute: authAuthRoute,
 }
 
 const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
@@ -108,10 +129,12 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 )
 
 interface protectedRouteRouteChildren {
+  protectedDashboardRoute: typeof protectedDashboardRoute
   protectedIndexRoute: typeof protectedIndexRoute
 }
 
 const protectedRouteRouteChildren: protectedRouteRouteChildren = {
+  protectedDashboardRoute: protectedDashboardRoute,
   protectedIndexRoute: protectedIndexRoute,
 }
 
