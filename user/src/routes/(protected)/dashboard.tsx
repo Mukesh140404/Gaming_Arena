@@ -106,21 +106,9 @@ const GAMES_DATA: GameItem[] = [
   },
 ];
 
-const CATEGORIES = ["All", "Action", "Multiplayer", "Strategy", "Racing", "Arcade"] as const;
-
 function RouteComponent() {
-  const [activeCategory, setActiveCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [playingGame, setPlayingGame] = useState<string | null>(null);
-
-  const filteredGames = GAMES_DATA.filter((game) => {
-    const matchesCategory =
-      activeCategory === "All" || game.category === activeCategory;
-    const matchesSearch = game.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
 
   return (
     <div className="space-y-8 pb-12">
@@ -310,9 +298,9 @@ function RouteComponent() {
         </div>
 
         {/* Games Cards Grid */}
-        {filteredGames.length > 0 ? (
+        {GAMES_DATA.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredGames.map((game, index) => (
+            {GAMES_DATA.map((game, index) => (
               <motion.div
                 key={game.id}
                 initial={{ opacity: 0, scale: 0.96 }}
