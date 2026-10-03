@@ -20,9 +20,7 @@ function ProtectedLayout() {
       <Navbar projectName={PROJECT_NAME} username="Rohit Negi" userRole="Frontend Lead" />
 
       <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-white/80 bg-white/85 p-6 backdrop-blur-xl shadow-[0_25px_60px_-15px_rgba(232,93,86,0.1),0_10px_25px_-5px_rgba(0,0,0,0.04)] min-h-[calc(100vh-10rem)]">
           <Outlet />
-        </div>
       </main>
 
     </div>
