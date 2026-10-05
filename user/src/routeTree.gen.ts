@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as authRouteRouteImport } from './routes/(auth)/route'
 import { Route as protectedRouteRouteImport } from './routes/(protected)/route'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as authAuthRouteImport } from './routes/(auth)/auth'
 import { Route as protectedIndexRouteImport } from './routes/(protected)/index'
 import { Route as protectedDashboardRouteImport } from './routes/(protected)/dashboard'
@@ -21,6 +22,11 @@ const authRouteRoute = authRouteRouteImport.update({
 } as any)
 const protectedRouteRoute = protectedRouteRouteImport.update({
   id: '/(protected)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const authAuthRoute = authAuthRouteImport.update({
@@ -40,11 +46,13 @@ const protectedDashboardRoute = protectedDashboardRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/admin': typeof AdminRouteRoute
   '/auth': typeof authAuthRoute
   '/dashboard': typeof protectedDashboardRoute
   '/': typeof protectedIndexRoute
 }
 export interface FileRoutesByTo {
+  '/admin': typeof AdminRouteRoute
   '/auth': typeof authAuthRoute
   '/dashboard': typeof protectedDashboardRoute
   '/': typeof protectedIndexRoute
@@ -53,19 +61,21 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(auth)': typeof authRouteRouteWithChildren
   '/(protected)': typeof protectedRouteRouteWithChildren
+  '/admin': typeof AdminRouteRoute
   '/(auth)/auth': typeof authAuthRoute
   '/(protected)/dashboard': typeof protectedDashboardRoute
   '/(protected)/': typeof protectedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/auth' | '/dashboard' | '/'
+  fullPaths: '/admin' | '/auth' | '/dashboard' | '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/dashboard' | '/'
+  to: '/admin' | '/auth' | '/dashboard' | '/'
   id:
     | '__root__'
     | '/(auth)'
     | '/(protected)'
+    | '/admin'
     | '/(auth)/auth'
     | '/(protected)/dashboard'
     | '/(protected)/'
@@ -74,6 +84,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   authRouteRoute: typeof authRouteRouteWithChildren
   protectedRouteRoute: typeof protectedRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -90,6 +101,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof protectedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(auth)/auth': {
@@ -145,6 +163,7 @@ const protectedRouteRouteWithChildren = protectedRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   authRouteRoute: authRouteRouteWithChildren,
   protectedRouteRoute: protectedRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

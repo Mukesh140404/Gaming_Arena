@@ -9,29 +9,29 @@ import { signToken } from "../../utils/jwt.js";
 import { clearAuthCookie, setAuthCookie } from "../../utils/cookie.js";
 import { ApiResponse } from "../../lib/ApiResponse.js";
 
-const signUp = asyncHandler(async(req:Request,res:Response)=>{
+const signUp = asyncHandler(async (req: Request, res: Response) => {
   const parsedBody = userSignUpSchema.parse(req.body);
-  if(!parsedBody.email ||!parsedBody.name || !parsedBody.passwordHash ||!parsedBody.role){
-    throw new ApiError(400,"All fields are required");
+  if (!parsedBody.email || !parsedBody.name || !parsedBody.passwordHash || !parsedBody.role) {
+    throw new ApiError(400, "All fields are required");
   }
   const [existingUser] = await db
-  .select()
-  .from(users)
-  .where(eq(users.email, parsedBody.email))
-  if(existingUser){
-    throw new ApiError(409,"User already exists");
-  }  
+    .select()
+    .from(users)
+    .where(eq(users.email, parsedBody.email))
+  if (existingUser) {
+    throw new ApiError(409, "User already exists");
+  }
   const hashedPassword = await hashPassword(parsedBody.passwordHash);
-    
+
   const [createdUser] = await db
-  .insert(users)
-  .values({
-    name: parsedBody.name,
-    email: parsedBody.email,
-    passwordHash: hashedPassword,
-    role: parsedBody.role
-  })
-  .returning();
+    .insert(users)
+    .values({
+      name: parsedBody.name,
+      email: parsedBody.email,
+      passwordHash: hashedPassword,
+      role: parsedBody.role
+    })
+    .returning();
 
   const token = signToken({
     id: createdUser.id,
@@ -68,8 +68,8 @@ const login = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(401, "Invalid email or password");
   }
   const token = signToken({
-    id:user.id,
-    name:user.name,
+    id: user.id,
+    name: user.name,
     email: user.email,
     role: user.role,
   });
@@ -102,6 +102,4 @@ const getMe = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, safeUser, "User retrieved successfully"));
 });
 
-
-
-export { login,signUp, logout, getMe };
+export { login, signUp, logout, getMe };

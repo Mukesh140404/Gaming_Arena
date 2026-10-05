@@ -1,10 +1,37 @@
 import express from "express";
-import { Request,Response } from "express";
-import path from "node:path";
 import { ApiResponse } from "./lib/ApiResponse.js";
 import routes from "./routes/index.js"
+import { errorMiddleware } from "./middlewares/error.middleware.js";
+import cors from "cors";
+import cookieParser from "cookie-parser"
+import helmet from "helmet";
+import { env } from "./config/env.js";
 
 const app = express();
+app.use(helmet());
+const allowedOrigins = [
+  env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true
+}));
+
+
+app.use(express.json({limit:"10kb"}));
+app.use(express.urlencoded({extended:true}));
+app.use(express.static("public"))
+app.use(cookieParser())
 
 app.get("/", (req, res) => {
     res.status(200).json(

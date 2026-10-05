@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Mail, Eye, EyeOff, User } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useLogin, useSignup } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/(auth)/auth")({
   component: RouteComponent,
@@ -9,6 +10,8 @@ export const Route = createFileRoute("/(auth)/auth")({
 
 function RouteComponent() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const loginMutation = useLogin();
+  const signupMutation = useSignup();
 
   const [loginEmail, setLoginEmail] = useState("daniel21fisher@gmail.com");
   const [loginPassword, setLoginPassword] = useState("password123");
@@ -20,6 +23,15 @@ function RouteComponent() {
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
+
+  const LoginHandler =(e: React.FormEvent)=>{
+    e.preventDefault();
+    loginMutation.mutate({ email:loginEmail,passwordHash:loginPassword });
+  }
+  const SignUpHandler =(e: React.FormEvent)=>{
+    e.preventDefault();
+    signupMutation.mutate({ email:signupEmail,passwordHash:signupPassword,name:signupUsername,role:"user"});
+  }
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-[#FDF0EE] p-4 sm:p-6 overflow-hidden">
@@ -76,7 +88,7 @@ function RouteComponent() {
                     Login
                   </h1>
 
-                  <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+                  <form onSubmit={LoginHandler} className="space-y-4">
                     
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-700">
@@ -162,7 +174,7 @@ function RouteComponent() {
                     Sign Up
                   </h1>
 
-                  <form onSubmit={(e) => e.preventDefault()} className="space-y-3.5">
+                  <form onSubmit={SignUpHandler} className="space-y-3.5">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-700">
                         Username
