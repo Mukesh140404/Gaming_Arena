@@ -15,6 +15,8 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as authAuthRouteImport } from './routes/(auth)/auth'
 import { Route as protectedIndexRouteImport } from './routes/(protected)/index'
 import { Route as protectedDashboardRouteImport } from './routes/(protected)/dashboard'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminGamesRouteImport } from './routes/admin/games'
 
 const authRouteRoute = authRouteRouteImport.update({
   id: '/(auth)',
@@ -44,33 +46,49 @@ const protectedDashboardRoute = protectedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => protectedRouteRoute,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminGamesRoute = AdminGamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/admin': typeof AdminRouteRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof authAuthRoute
   '/dashboard': typeof protectedDashboardRoute
+  '/admin/games': typeof AdminGamesRoute
   '/': typeof protectedIndexRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
-  '/admin': typeof AdminRouteRoute
   '/auth': typeof authAuthRoute
   '/dashboard': typeof protectedDashboardRoute
+  '/admin/games': typeof AdminGamesRoute
   '/': typeof protectedIndexRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(auth)': typeof authRouteRouteWithChildren
   '/(protected)': typeof protectedRouteRouteWithChildren
-  '/admin': typeof AdminRouteRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/(auth)/auth': typeof authAuthRoute
   '/(protected)/dashboard': typeof protectedDashboardRoute
+  '/admin/games': typeof AdminGamesRoute
   '/(protected)/': typeof protectedIndexRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/admin' | '/auth' | '/dashboard' | '/'
+  fullPaths:
+    '/admin' | '/auth' | '/dashboard' | '/admin/games' | '/' | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/admin' | '/auth' | '/dashboard' | '/'
+  to: '/auth' | '/dashboard' | '/admin/games' | '/' | '/admin'
   id:
     | '__root__'
     | '/(auth)'
@@ -78,13 +96,15 @@ export interface FileRouteTypes {
     | '/admin'
     | '/(auth)/auth'
     | '/(protected)/dashboard'
+    | '/admin/games'
     | '/(protected)/'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   authRouteRoute: typeof authRouteRouteWithChildren
   protectedRouteRoute: typeof protectedRouteRouteWithChildren
-  AdminRouteRoute: typeof AdminRouteRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -131,6 +151,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof protectedDashboardRouteImport
       parentRoute: typeof protectedRouteRoute
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/games': {
+      id: '/admin/games'
+      path: '/games'
+      fullPath: '/admin/games'
+      preLoaderRoute: typeof AdminGamesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
   }
 }
 
@@ -160,10 +194,24 @@ const protectedRouteRouteWithChildren = protectedRouteRoute._addFileChildren(
   protectedRouteRouteChildren,
 )
 
+interface AdminRouteRouteChildren {
+  AdminGamesRoute: typeof AdminGamesRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminGamesRoute: AdminGamesRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   authRouteRoute: authRouteRouteWithChildren,
   protectedRouteRoute: protectedRouteRouteWithChildren,
-  AdminRouteRoute: AdminRouteRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
