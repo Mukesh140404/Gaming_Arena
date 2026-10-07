@@ -6,9 +6,6 @@ export interface Game {
   minPlayers: number;
   maxPlayers: number;
   isActive: boolean;
-  coverImage?: string;
-  category?: string;
-  hourlyRate?: number;
   createdAt?: string | Date;
 }
 
@@ -18,9 +15,6 @@ export type AddGameInput = {
   minPlayers: number;
   maxPlayers: number;
   isActive?: boolean;
-  coverImage?: string;
-  category?: string;
-  hourlyRate?: number;
 };
 
 export type UpdateGameInput = Partial<AddGameInput> & {

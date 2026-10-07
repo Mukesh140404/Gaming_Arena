@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchAllGames, createGame, updateGameApi, deleteGameApi } from "./game";
+import { fetchAllGames, fetchGameById, createGame, updateGameApi, deleteGameApi } from "./game";
 import type { AddGameInput, UpdateGameInput } from "../types/game.type";
 import { toast } from "sonner";
 
@@ -8,6 +8,13 @@ export const gamesQueryOptions = queryOptions({
   queryFn: fetchAllGames,
   staleTime: 1000 * 30, // 30 seconds
 });
+
+export const singleGameQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: ["admin", "games", id],
+    queryFn: () => fetchGameById(id),
+    enabled: !!id,
+  });
 
 export function useAddGameMutation() {
   const queryClient = useQueryClient();
