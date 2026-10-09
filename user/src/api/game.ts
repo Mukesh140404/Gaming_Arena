@@ -12,22 +12,16 @@ const INITIAL_DEFAULT_GAMES: Game[] = [
     minPlayers: 1,
     maxPlayers: 10,
     isActive: true,
-    category: "Tactical Shooter",
-    hourlyRate: 150,
-    coverImage: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   },
   {
     id: "g-2",
-    name: "Cyberpunk 2077: Phantom Liberty",
+    name: "Cyberpunk 2077",
     slug: "cyberpunk-2077",
     description: "Open-world action-adventure RPG set in the dystopian megalopolis of Night City.",
     minPlayers: 1,
     maxPlayers: 1,
     isActive: true,
-    category: "Action RPG",
-    hourlyRate: 180,
-    coverImage: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   },
   {
@@ -38,9 +32,6 @@ const INITIAL_DEFAULT_GAMES: Game[] = [
     minPlayers: 1,
     maxPlayers: 4,
     isActive: true,
-    category: "Sports",
-    hourlyRate: 120,
-    coverImage: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   },
   {
@@ -51,9 +42,6 @@ const INITIAL_DEFAULT_GAMES: Game[] = [
     minPlayers: 1,
     maxPlayers: 2,
     isActive: true,
-    category: "Fighting",
-    hourlyRate: 140,
-    coverImage: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   },
   {
@@ -64,9 +52,6 @@ const INITIAL_DEFAULT_GAMES: Game[] = [
     minPlayers: 1,
     maxPlayers: 10,
     isActive: false,
-    category: "Competitive FPS",
-    hourlyRate: 150,
-    coverImage: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   },
   {
@@ -77,9 +62,6 @@ const INITIAL_DEFAULT_GAMES: Game[] = [
     minPlayers: 1,
     maxPlayers: 6,
     isActive: true,
-    category: "Racing",
-    hourlyRate: 160,
-    coverImage: "https://images.unsplash.com/photo-1547394765-185e1e68f34e?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   },
 ];
@@ -107,19 +89,35 @@ function saveStoredGames(games: Game[]) {
   }
 }
 
+// 1. All List (GET /games)
 export async function fetchAllGames(): Promise<Game[]> {
   try {
     const res = await api.get("/games");
-    if (res.data && res.data.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+    if (res.data?.data && Array.isArray(res.data.data)) {
       saveStoredGames(res.data.data);
       return res.data.data;
     }
   } catch {
-    // API server may be offline or unmigrated; use local cache
+    // API server may be offline; fallback to storage
   }
   return getStoredGames();
 }
 
+// 2. Single List / Item (GET /games/:id)
+export async function fetchGameById(id: string): Promise<Game | null> {
+  try {
+    const res = await api.get(`/games/${id}`);
+    if (res.data?.data) {
+      return res.data.data;
+    }
+  } catch {
+    // Fallback
+  }
+  const all = getStoredGames();
+  return all.find((g) => g.id === id) || null;
+}
+
+// 3. Add Game (POST /games)
 export async function createGame(input: AddGameInput): Promise<Game> {
   const localSlug = input.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-");
   const localGame: Game = {
@@ -130,9 +128,6 @@ export async function createGame(input: AddGameInput): Promise<Game> {
     minPlayers: Number(input.minPlayers) || 1,
     maxPlayers: Number(input.maxPlayers) || 4,
     isActive: input.isActive ?? true,
-    category: input.category || "General",
-    hourlyRate: Number(input.hourlyRate) || 100,
-    coverImage: input.coverImage || "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
     createdAt: new Date().toISOString(),
   };
 
@@ -154,7 +149,7 @@ export async function createGame(input: AddGameInput): Promise<Game> {
       return serverGame;
     }
   } catch {
-    // Graceful fallback to client storage
+    // Fallback
   }
 
   const all = getStoredGames();
@@ -162,6 +157,7 @@ export async function createGame(input: AddGameInput): Promise<Game> {
   return localGame;
 }
 
+// 4. Update Game (PATCH/PUT /games/:id)
 export async function updateGameApi(input: UpdateGameInput): Promise<Game> {
   const all = getStoredGames();
   const existing = all.find(g => g.id === input.id);
@@ -191,18 +187,19 @@ export async function updateGameApi(input: UpdateGameInput): Promise<Game> {
       return merged;
     }
   } catch {
-    // Graceful fallback
+    // Fallback
   }
 
   saveStoredGames(all.map(g => (g.id === input.id ? updated : g)));
   return updated;
 }
 
+// 5. Delete Game (DELETE /games/:id)
 export async function deleteGameApi(id: string): Promise<{ id: string }> {
   try {
     await api.delete(`/games/${id}`);
   } catch {
-    // Graceful fallback
+    // Fallback
   }
 
   const all = getStoredGames();

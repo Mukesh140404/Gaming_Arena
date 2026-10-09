@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { GamesManagement } from '@/components/admin/games-management';
+import { AdminDashboard } from '@/components/admin/admin-dashboard';
 
 export const Route = createFileRoute('/admin/')({
-  component: GamesManagement,
+  component: AdminDashboard,
 });

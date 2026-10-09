@@ -126,7 +126,7 @@ function DialogContent({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50",
+          "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 shadow-2xl transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50",
           "scale-100 opacity-100",
           className
         )}
@@ -135,7 +135,7 @@ function DialogContent({
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="absolute top-4 right-4 rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+          className="absolute top-3.5 right-3.5 flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 transition dark:hover:bg-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
