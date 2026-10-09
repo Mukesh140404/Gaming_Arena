@@ -6,10 +6,13 @@ import { db } from "../../db/index.js";
 import { and, eq } from "drizzle-orm";
 import { ApiError } from "../../lib/ApiError.js";
 import { ApiResponse } from "../../lib/ApiResponse.js";
+import { comparePassword, hashPassword } from "../../utils/password.js";
 
 const createRoom = asyncHandler(async (req: Request, res: Response) => {
     const parsedBody = createRoomSchema.parse(req.body);
-
+    if (parsedBody.visibility === "private" && !parsedBody.passwordHash) {
+        throw new ApiError(409, "password is required for private rooms")
+    }
     const [existingRoom] = await db
         .select()
         .from(rooms)
@@ -20,7 +23,9 @@ const createRoom = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const hostId = req.user?.id;
-
+    const passwordHash = parsedBody.passwordHash
+        ? await hashPassword(parsedBody.passwordHash)
+        : null
     if (!hostId) {
         throw new ApiError(401, "Unauthorized")
     }
@@ -33,10 +38,18 @@ const createRoom = asyncHandler(async (req: Request, res: Response) => {
             hostId: hostId,
             name: parsedBody.name,
             visibility: parsedBody.visibility,
-            passwordHash: parsedBody.passwordHash,
+            passwordHash: passwordHash,
             maxPlayers: parsedBody.maxPlayers
         })
         .returning()
+
+    // Add host as the initial player in roomPlayers
+    await db.insert(roomPlayers).values({
+        roomId: createdRoom.id,
+        userId: hostId,
+        role: "host",
+        status: "active"
+    }).catch(() => {});
 
     return res
         .status(201)
@@ -63,7 +76,13 @@ const joinRoom = asyncHandler(async (req: Request, res: Response) => {
     if (existingRoom.status !== "waiting") {
         throw new ApiError(400, "Room is not waiting")
     }
+    const isPasswordValid = existingRoom.passwordHash
+        ? await comparePassword(password, existingRoom.passwordHash)
+        : false
 
+    if(existingRoom.visibility ==="private" && !isPasswordValid){
+        throw new ApiError(401, "Invalid password");
+    }
     const [existingPlayer] = await db
         .select()
         .from(roomPlayers)
@@ -199,4 +218,16 @@ const getRoom = asyncHandler(async (req: Request, res: Response) => {
         .json(new ApiResponse(200, { ...safeRoom, roomPlayersList }, "Room retrieved successfully"));
 })
 
-export { createRoom, joinRoom, leaveRoom, destroyRoom, getRoom }
+const getAllRoomsOfGame = asyncHandler(async (req: Request, res: Response) => {
+    const gameId = req.params.gameId as string;
+    const roomsList = await db
+        .select()
+        .from(rooms)
+        .where(eq(rooms.gameId, gameId));
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, roomsList || [], "All Rooms fetched for the game"))
+})
+
+export { createRoom, joinRoom, leaveRoom, destroyRoom, getRoom, getAllRoomsOfGame }
