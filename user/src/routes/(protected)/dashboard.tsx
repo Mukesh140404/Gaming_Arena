@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Trophy,
   Coins,
   Flame,
   Play,
-  Users,
-  Star,
   Gamepad2,
   Sparkles,
   Award,
@@ -15,100 +13,18 @@ import {
   Search,
 } from "lucide-react";
 import { motion } from "motion/react";
+import { gamesQueryOptions } from "../../api/game.queries";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/(protected)/dashboard")({
   component: RouteComponent,
 });
 
-interface GameItem {
-  id: string;
-  title: string;
-  category: "Action" | "Strategy" | "Arcade" | "Multiplayer" | "Racing";
-  players: number;
-  rating: number;
-  rewardCoins: number;
-  badge?: string;
-  gradient: string;
-  iconBg: string;
-  description: string;
-}
-
-const GAMES_DATA: GameItem[] = [
-  {
-    id: "cyber-dash",
-    title: "Cyber Dash: Neon Arena",
-    category: "Action",
-    players: 1420,
-    rating: 4.9,
-    rewardCoins: 500,
-    badge: "Trending 🔥",
-    gradient: "from-rose-500 via-red-500 to-amber-500",
-    iconBg: "bg-red-500/10 text-red-500",
-    description: "Fast-paced neon obstacle parkour battle with live online rivals.",
-  },
-  {
-    id: "battle-tanks",
-    title: "Battle Tanks 3D League",
-    category: "Multiplayer",
-    players: 890,
-    rating: 4.8,
-    rewardCoins: 1200,
-    badge: "Tournament 🏆",
-    gradient: "from-amber-500 via-orange-500 to-red-500",
-    iconBg: "bg-orange-500/10 text-orange-500",
-    description: "Command heavy tactical tanks in realistic 4v4 destruction arenas.",
-  },
-  {
-    id: "pixel-quest",
-    title: "Pixel Quest: Dragon Slayer",
-    category: "Action",
-    players: 640,
-    rating: 4.9,
-    rewardCoins: 850,
-    gradient: "from-pink-500 via-rose-500 to-purple-600",
-    iconBg: "bg-pink-500/10 text-pink-500",
-    description: "Retro roguelike dungeon crawler packed with epic boss encounters.",
-  },
-  {
-    id: "nitro-rush",
-    title: "Speed Rush: Nitro League",
-    category: "Racing",
-    players: 1105,
-    rating: 4.7,
-    rewardCoins: 1500,
-    badge: "Popular ⚡",
-    gradient: "from-red-500 via-pink-600 to-rose-700",
-    iconBg: "bg-rose-500/10 text-rose-500",
-    description: "High-octane street drift racing with turbo nitro boosters.",
-  },
-  {
-    id: "chess-royale",
-    title: "Chess Royale 1v1 Ranked",
-    category: "Strategy",
-    players: 730,
-    rating: 5.0,
-    rewardCoins: 2000,
-    badge: "Ranked 👑",
-    gradient: "from-orange-400 via-amber-500 to-rose-500",
-    iconBg: "bg-amber-500/10 text-amber-500",
-    description: "Speed chess battles with timed blitz clocks and ELO ranking.",
-  },
-  {
-    id: "galaxy-invaders",
-    title: "Galaxy Invaders 2: Nova",
-    category: "Arcade",
-    players: 480,
-    rating: 4.6,
-    rewardCoins: 400,
-    gradient: "from-rose-500 via-purple-500 to-indigo-600",
-    iconBg: "bg-purple-500/10 text-purple-500",
-    description: "Classic vertical space arcade shooter with bullet-hell waves.",
-  },
-];
 
 function RouteComponent() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [playingGame, setPlayingGame] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { data: GAMES_DATA = [], isLoading } = useQuery(gamesQueryOptions);
 
   return (
     <div className="space-y-8 pb-12">
@@ -124,7 +40,7 @@ function RouteComponent() {
         <div className="pointer-events-none absolute -bottom-24 left-10 h-64 w-64 rounded-full bg-[#FFE5DF]/80 blur-3xl" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
-          
+
           {/* Profile Identity (Left) */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left w-full lg:w-auto">
             {/* Mascot Avatar with Ring Glow */}
@@ -175,7 +91,7 @@ function RouteComponent() {
 
           {/* Quick Stats Cards Grid (Right) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 w-full lg:w-auto">
-            
+
             {/* Coins Balance Card */}
             <div className="rounded-2xl border border-amber-200/80 bg-linear-to-br from-amber-50/80 to-amber-100/40 p-4 shadow-xs flex flex-col justify-between">
               <div className="flex items-center justify-between gap-2">
@@ -298,131 +214,112 @@ function RouteComponent() {
         </div>
 
         {/* Games Cards Grid */}
-        {GAMES_DATA.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {GAMES_DATA.map((game, index) => (
-              <motion.div
-                key={game.id}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.25, delay: index * 0.05 }}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-200/80 bg-white p-5 shadow-sm hover:shadow-xl hover:border-[#FF6562]/40 transition-all duration-300 hover:-translate-y-1"
-              >
-                {/* Top Banner with Gradient */}
-                <div className="relative mb-4 overflow-hidden rounded-2xl bg-linear-to-br p-4 text-white shadow-xs">
-                  <div className={`absolute inset-0 bg-linear-to-br ${game.gradient} opacity-90 group-hover:opacity-100 transition`} />
+        {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-200/80 bg-white p-5 shadow-sm"
+                >
+                  {/* Banner Skeleton */}
+                  <div className="mb-4 h-32 animate-pulse rounded-2xl bg-gray-200">
+                    <div className="flex h-full flex-col justify-between p-4">
+                      <div className="flex justify-between">
+                        <div className="h-5 w-20 rounded-lg bg-gray-300" />
+                        <div className="h-5 w-14 rounded-lg bg-gray-300" />
+                      </div>
 
-                  {/* Decorative Mesh Circle */}
-                  <div className="pointer-events-none absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10 blur-md" />
+                      <div className="flex items-center gap-3">
+                        <div className="h-11 w-11 rounded-2xl bg-gray-300" />
 
-                  <div className="relative z-10 flex items-center justify-between">
-                    <span className="rounded-lg bg-black/25 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider backdrop-blur-xs">
-                      {game.category}
-                    </span>
-
-                    {game.badge && (
-                      <span className="rounded-lg bg-white/90 px-2 py-0.5 text-[10px] font-black text-[#1F2438] shadow-xs">
-                        {game.badge}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title in Banner */}
-                  <div className="relative z-10 mt-6 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner">
-                      <Flame className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black tracking-tight text-white leading-tight">
-                        {game.title}
-                      </h3>
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-white/90">
-                        <Star className="h-3 w-3 fill-amber-300 text-amber-300" />
-                        <span>{game.rating} Rating</span>
+                        <div className="space-y-2">
+                          <div className="h-5 w-28 rounded bg-gray-300" />
+                          <div className="h-3 w-20 rounded bg-gray-300" />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Description */}
-                <p className="text-xs font-medium text-gray-600 line-clamp-2 mb-4 leading-relaxed">
-                  {game.description}
-                </p>
+                  {/* Description Skeleton */}
+                  <div className="mb-4 space-y-2">
+                    <div className="h-3 w-full animate-pulse rounded bg-gray-200" />
+                    <div className="h-3 w-4/5 animate-pulse rounded bg-gray-200" />
+                  </div>
 
-                {/* Meta Details: Active Players & Coins Reward */}
-                <div className="space-y-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between text-xs font-bold text-gray-700">
-                    <div className="flex items-center gap-1.5 text-gray-600">
-                      <Users className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>{game.players.toLocaleString()} Playing</span>
+                  {/* Meta + Button Skeleton */}
+                  <div className="space-y-3 border-t border-gray-100 pt-3">
+                    <div className="flex items-center justify-between">
+                      <div className="h-4 w-24 animate-pulse rounded bg-gray-200" />
+                      <div className="h-6 w-24 animate-pulse rounded-lg bg-gray-200" />
                     </div>
 
-                    <div className="flex items-center gap-1 text-amber-700 bg-amber-50 border border-amber-200/60 px-2.5 py-0.5 rounded-lg">
-                      <Coins className="h-3.5 w-3.5 text-amber-500" />
-                      <span>+{game.rewardCoins} Coins</span>
+                    <div className="h-11 w-full animate-pulse rounded-2xl bg-gray-200" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : GAMES_DATA.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {GAMES_DATA.map((game, index) => (
+                <motion.div
+                  key={game.id}
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.25, delay: index * 0.05 }}
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-gray-200/80 bg-white p-5 shadow-sm hover:shadow-xl hover:border-[#FF6562]/40 transition-all duration-300 hover:-translate-y-1"
+                >
+                  {/* Top Banner with Gradient */}
+                  <div className="relative mb-4 overflow-hidden rounded-2xl bg-linear-to-br p-4 text-white shadow-xs">
+                    <div className={`absolute inset-0 bg-linear-to-br from-rose-500 via-red-500 to-amber-500 opacity-90 group-hover:opacity-100 transition`} />
+
+                    {/* Decorative Mesh Circle */}
+                    <div className="pointer-events-none absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/10 blur-md" />
+
+
+                    {/* Title in Banner */}
+                    <div className="relative z-10 mt-6 flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm shadow-inner">
+                        <Flame className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-black tracking-tight text-white leading-tight">
+                          {game.name}
+                        </h3>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Play Action Button */}
-                  <button
-                    type="button"
-                    onClick={() => setPlayingGame(game.title)}
-                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FF6562] py-3 text-xs font-black text-white shadow-md shadow-red-200 hover:bg-[#fa534f] active:scale-[0.98] transition cursor-pointer"
-                  >
-                    <Play className="h-4 w-4 fill-white" />
-                    Play Now
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-12 text-center text-gray-400">
-            <Gamepad2 className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <p className="text-sm font-bold text-gray-600">No arena games found.</p>
-            <p className="text-xs text-gray-400 mt-1">Try searching for a different name or category.</p>
-          </div>
-        )}
+                  {/* Description */}
+                  <p className="text-xs font-medium text-gray-600 line-clamp-2 mb-4 leading-relaxed">
+                    {game.description}
+                  </p>
+
+                  {/* Meta Details: Active Players & Coins Reward */}
+                  <div className="space-y-3 pt-3 border-t border-gray-100">
+
+                    {/* Play Action Button */}
+                    <button
+                      type="button"
+                      onClick={()=>{
+                        navigate({to:`/game/${game.slug}`})
+                      }}
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-[#FF6562] py-3 text-xs font-black text-white shadow-md shadow-red-200 hover:bg-[#fa534f] active:scale-[0.98] transition cursor-pointer"
+                    >
+                      <Play className="h-4 w-4 fill-white" />
+                      Play Now
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-12 text-center text-gray-400">
+              <Gamepad2 className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+              <p className="text-sm font-bold text-gray-600">No arena games found.</p>
+              <p className="text-xs text-gray-400 mt-1">Try searching for a different name or category.</p>
+            </div>
+          )}
       </motion.section>
-
-      {/* Interactive Launch Modal/Toast when clicking Play */}
-      {playingGame && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-sm rounded-[2rem] border border-white/80 bg-white p-6 shadow-2xl text-center space-y-4 animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-[#FCECE9] text-[#FF6562] shadow-sm">
-              <Play className="h-8 w-8 fill-[#FF6562] ml-1" />
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="text-xl font-black text-[#1F2438]">
-                Launching Arena
-              </h3>
-              <p className="text-xs font-semibold text-gray-500">
-                Connecting to match servers for:
-              </p>
-              <p className="text-sm font-black text-[#E85D56]">{playingGame}</p>
-            </div>
-
-            <div className="flex items-center justify-center gap-2 py-1">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-bold text-emerald-600">
-                Server Ready • Low Ping
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setPlayingGame(null)}
-              className="w-full rounded-xl bg-gray-900 py-2.5 text-xs font-bold text-white hover:bg-black transition cursor-pointer"
-            >
-              Close / Return
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
