@@ -49,7 +49,8 @@ export const createRoomSchema = createInsertSchema(rooms).omit({
   createdAt: true,
   startedAt: true,
   finishedAt: true,
-  status: true
+  status: true,
+  hostId: true,
 })
 
 export const updateRoomSchema = createInsertSchema(rooms).partial().pick({

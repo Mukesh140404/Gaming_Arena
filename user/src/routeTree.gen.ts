@@ -17,6 +17,7 @@ import { Route as protectedIndexRouteImport } from './routes/(protected)/index'
 import { Route as protectedDashboardRouteImport } from './routes/(protected)/dashboard'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminGamesRouteImport } from './routes/admin/games'
+import { Route as protectedGameSlugRouteImport } from './routes/(protected)/game/$slug'
 import { Route as protectedGameBingoRouteImport } from './routes/(protected)/game/bingo'
 
 const authRouteRoute = authRouteRouteImport.update({
@@ -57,6 +58,11 @@ const AdminGamesRoute = AdminGamesRouteImport.update({
   path: '/games',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const protectedGameSlugRoute = protectedGameSlugRouteImport.update({
+  id: '/game/$slug',
+  path: '/game/$slug',
+  getParentRoute: () => protectedRouteRoute,
+} as any)
 const protectedGameBingoRoute = protectedGameBingoRouteImport.update({
   id: '/game/bingo',
   path: '/game/bingo',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/admin/games': typeof AdminGamesRoute
   '/': typeof protectedIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/game/$slug': typeof protectedGameSlugRoute
   '/game/bingo': typeof protectedGameBingoRoute
 }
 export interface FileRoutesByTo {
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/admin/games': typeof AdminGamesRoute
   '/': typeof protectedIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/game/$slug': typeof protectedGameSlugRoute
   '/game/bingo': typeof protectedGameBingoRoute
 }
 export interface FileRoutesById {
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/admin/games': typeof AdminGamesRoute
   '/(protected)/': typeof protectedIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/(protected)/game/$slug': typeof protectedGameSlugRoute
   '/(protected)/game/bingo': typeof protectedGameBingoRoute
 }
 export interface FileRouteTypes {
@@ -101,9 +110,17 @@ export interface FileRouteTypes {
     | '/admin/games'
     | '/'
     | '/admin/'
+    | '/game/$slug'
     | '/game/bingo'
   fileRoutesByTo: FileRoutesByTo
-  to: '/auth' | '/dashboard' | '/admin/games' | '/' | '/admin' | '/game/bingo'
+  to:
+    | '/auth'
+    | '/dashboard'
+    | '/admin/games'
+    | '/'
+    | '/admin'
+    | '/game/$slug'
+    | '/game/bingo'
   id:
     | '__root__'
     | '/(auth)'
@@ -114,6 +131,7 @@ export interface FileRouteTypes {
     | '/admin/games'
     | '/(protected)/'
     | '/admin/'
+    | '/(protected)/game/$slug'
     | '/(protected)/game/bingo'
   fileRoutesById: FileRoutesById
 }
@@ -181,6 +199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGamesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/(protected)/game/$slug': {
+      id: '/(protected)/game/$slug'
+      path: '/game/$slug'
+      fullPath: '/game/$slug'
+      preLoaderRoute: typeof protectedGameSlugRouteImport
+      parentRoute: typeof protectedRouteRoute
+    }
     '/(protected)/game/bingo': {
       id: '/(protected)/game/bingo'
       path: '/game/bingo'
@@ -206,12 +231,14 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 interface protectedRouteRouteChildren {
   protectedDashboardRoute: typeof protectedDashboardRoute
   protectedIndexRoute: typeof protectedIndexRoute
+  protectedGameSlugRoute: typeof protectedGameSlugRoute
   protectedGameBingoRoute: typeof protectedGameBingoRoute
 }
 
 const protectedRouteRouteChildren: protectedRouteRouteChildren = {
   protectedDashboardRoute: protectedDashboardRoute,
   protectedIndexRoute: protectedIndexRoute,
+  protectedGameSlugRoute: protectedGameSlugRoute,
   protectedGameBingoRoute: protectedGameBingoRoute,
 }
 
