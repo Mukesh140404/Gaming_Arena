@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../../lib/asyncHandler.js";
 import { createRoomSchema, rooms } from "../../db/schema/rooms.js";
 import { games } from "../../db/schema/games.js";
+import { users } from "../../db/schema/users.js";
 import { roomPlayers } from "../../db/schema/roomPlayers.js";
 import { db } from "../../db/index.js";
 import { and, eq } from "drizzle-orm";
@@ -218,9 +219,19 @@ const getRoom = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const roomPlayersList = await db
-        .select()
+        .select({
+            id: roomPlayers.id,
+            roomId: roomPlayers.roomId,
+            userId: roomPlayers.userId,
+            role: roomPlayers.role,
+            status: roomPlayers.status,
+            joinedAt: roomPlayers.joinedAt,
+            name: users.name,
+            email: users.email,
+        })
         .from(roomPlayers)
-        .where(eq(roomPlayers.roomId, roomId))
+        .leftJoin(users, eq(roomPlayers.userId, users.id))
+        .where(eq(roomPlayers.roomId, roomId));
 
     const { passwordHash, ...safeRoom } = room;
 
@@ -258,7 +269,7 @@ const getAllRoomsOfGame = asyncHandler(async (req: Request, res: Response) => {
     const roomsList = await db
         .select()
         .from(rooms)
-        .where(eq(rooms.gameId, targetGameId));
+        .where(and(eq(rooms.gameId, targetGameId),eq(rooms.status,"waiting")));
 
     return res
         .status(200)

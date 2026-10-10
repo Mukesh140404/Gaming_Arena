@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { currentUserQueryOptions } from '@/api/auth.queries';
-import { gamesQueryOptions } from '@/api/game.queries';
+import { currentUserQueryOptions } from '@/hooks/useAuth';
+import { gamesQueryOptions } from '@/hooks/useGame';
 import { AdminNavbar } from '@/components/admin/admin-navbar';
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 

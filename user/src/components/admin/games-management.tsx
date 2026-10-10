@@ -1,12 +1,12 @@
 import { useState, useMemo, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { 
-  Gamepad2, 
-  Plus, 
-  Search, 
-  Pencil, 
-  Trash2, 
-  Eye, 
+import {
+  Gamepad2,
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
+  Eye,
   RefreshCw,
   Users,
   CheckCircle2,
@@ -14,12 +14,12 @@ import {
   Hash,
   Clock
 } from "lucide-react";
-import { 
-  gamesQueryOptions, 
-  useAddGameMutation, 
-  useUpdateGameMutation, 
-  useDeleteGameMutation 
-} from "@/api/game.queries";
+import {
+  gamesQueryOptions,
+  useAddGameMutation,
+  useUpdateGameMutation,
+  useDeleteGameMutation
+} from "@/hooks/useGame";
 import { fetchGameById } from "@/api/game";
 import type { Game, AddGameInput } from "@/types/game.type";
 import { Button } from "@/components/ui/button";
@@ -27,27 +27,27 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
 
 export function GamesManagement() {
   // 1. All List (GET /games)
   const { data: games = [], isLoading, refetch } = useQuery(gamesQueryOptions);
-  
+
   const addMutation = useAddGameMutation();
   const updateMutation = useUpdateGameMutation();
   const deleteMutation = useDeleteGameMutation();
@@ -360,7 +360,7 @@ export function GamesManagement() {
                 <TableBody>
                   {filteredGames.map((game) => (
                     <TableRow key={game.id} className="border-b border-zinc-200/60 dark:border-zinc-800/60 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/60">
-                      
+
                       {/* Name & Slug */}
                       <TableCell className="whitespace-nowrap">
                         <div className="flex flex-col">
@@ -576,7 +576,7 @@ export function GamesManagement() {
           </DialogHeader>
 
           <form onSubmit={handleSubmitAdd} className="space-y-3.5">
-            
+
             {/* Name */}
             <div>
               <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">
@@ -697,7 +697,7 @@ export function GamesManagement() {
           </DialogHeader>
 
           <form onSubmit={handleSubmitEdit} className="space-y-3.5">
-            
+
             {/* Title */}
             <div>
               <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block mb-1">

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
-import { gamesQueryOptions } from '@/api/game.queries';
+import { gamesQueryOptions } from '@/hooks/useGame';
 import { GameRoomsLobby } from '@/components/room/game-rooms-lobby';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Gamepad2 } from 'lucide-react';
@@ -57,9 +57,6 @@ function DynamicGameRoomsRoute() {
         gameSlug={matchedGame.slug}
         maxPlayersAllowed={matchedGame.maxPlayers || 8}
         description={matchedGame.description || undefined}
-        onStartGame={(room) => {
-          console.log("Start match in room", room.roomCode);
-        }}
       />
     </div>
   );

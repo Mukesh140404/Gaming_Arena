@@ -6,7 +6,7 @@ import {
   joinRoomApi,
   leaveRoomApi,
   destroyRoomApi,
-} from "./room";
+} from "../api/room";
 import type { CreateRoomInput, JoinRoomInput } from "../types/room.type";
 import { toast } from "sonner";
 
@@ -15,7 +15,7 @@ export const roomsOfGameQueryOptions = (gameId: string) =>
     queryKey: ["rooms", "game", gameId],
     queryFn: () => fetchRoomsOfGame(gameId),
     enabled: !!gameId,
-    refetchInterval: 5000, // Poll every 5s for live rooms list
+    refetchOnWindowFocus: false,
   });
 
 export const singleRoomQueryOptions = (roomId: string) =>
@@ -23,7 +23,7 @@ export const singleRoomQueryOptions = (roomId: string) =>
     queryKey: ["rooms", "single", roomId],
     queryFn: () => fetchRoomById(roomId),
     enabled: !!roomId,
-    refetchInterval: 3000, // Poll every 3s when inside a room lobby
+    refetchInterval: 5000,
   });
 
 export function useCreateRoomMutation(gameId?: string) {

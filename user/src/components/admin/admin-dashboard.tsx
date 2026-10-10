@@ -11,7 +11,7 @@ import {
   Activity,
   RefreshCw
 } from "lucide-react";
-import { gamesQueryOptions } from "@/api/game.queries";
+import { gamesQueryOptions } from "@/hooks/useGame";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

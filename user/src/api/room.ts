@@ -62,14 +62,22 @@ export async function joinRoomApi(input: JoinRoomInput): Promise<RoomPlayer> {
   throw new Error("Failed to join room");
 }
 
-// 5. Leave Room (POST /rooms/leave/:roomId)
+// 5. Leave Room (GET/POST /rooms/leave/:roomId)
 export async function leaveRoomApi(roomId: string): Promise<void> {
   if (!roomId) return;
-  await api.post(`/rooms/leave/${roomId}`);
+  try {
+    await api.get(`/rooms/leave/${roomId}`);
+  } catch {
+    await api.post(`/rooms/leave/${roomId}`);
+  }
 }
 
-// 6. Destroy Room (POST /rooms/destroy/:roomId)
+// 6. Destroy Room (GET/POST /rooms/destroy/:roomId)
 export async function destroyRoomApi(roomId: string): Promise<void> {
   if (!roomId) return;
-  await api.post(`/rooms/destroy/${roomId}`);
+  try {
+    await api.get(`/rooms/destroy/${roomId}`);
+  } catch {
+    await api.post(`/rooms/destroy/${roomId}`);
+  }
 }

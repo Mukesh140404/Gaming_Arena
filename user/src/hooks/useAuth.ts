@@ -1,9 +1,16 @@
-import { loginUser, logoutUser, signupUser } from "@/api/auth";
-import { currentUserQueryOptions } from "@/api/auth.queries";
+import { getCurrentUser, loginUser, logoutUser, signupUser } from "@/api/auth";
 import type { UserLoginInput, UserRegisterInput } from "@/types/auth.type";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+
+
+export const currentUserQueryOptions = queryOptions({
+  queryKey: ["currentUser"],
+  queryFn: getCurrentUser,
+  staleTime: 1000 * 60 * 5,
+});
+
 
 export function useLogin() {
   const navigate = useNavigate();

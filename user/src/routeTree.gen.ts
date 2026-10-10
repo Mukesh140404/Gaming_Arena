@@ -18,7 +18,7 @@ import { Route as protectedDashboardRouteImport } from './routes/(protected)/das
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminGamesRouteImport } from './routes/admin/games'
 import { Route as protectedGameSlugRouteImport } from './routes/(protected)/game/$slug'
-import { Route as protectedGameBingoRouteImport } from './routes/(protected)/game/bingo'
+import { Route as protectedRoomIdRouteImport } from './routes/(protected)/room/$id'
 
 const authRouteRoute = authRouteRouteImport.update({
   id: '/(auth)',
@@ -63,9 +63,9 @@ const protectedGameSlugRoute = protectedGameSlugRouteImport.update({
   path: '/game/$slug',
   getParentRoute: () => protectedRouteRoute,
 } as any)
-const protectedGameBingoRoute = protectedGameBingoRouteImport.update({
-  id: '/game/bingo',
-  path: '/game/bingo',
+const protectedRoomIdRoute = protectedRoomIdRouteImport.update({
+  id: '/room/$id',
+  path: '/room/$id',
   getParentRoute: () => protectedRouteRoute,
 } as any)
 
@@ -77,7 +77,7 @@ export interface FileRoutesByFullPath {
   '/': typeof protectedIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/game/$slug': typeof protectedGameSlugRoute
-  '/game/bingo': typeof protectedGameBingoRoute
+  '/room/$id': typeof protectedRoomIdRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof authAuthRoute
@@ -86,7 +86,7 @@ export interface FileRoutesByTo {
   '/': typeof protectedIndexRoute
   '/admin': typeof AdminIndexRoute
   '/game/$slug': typeof protectedGameSlugRoute
-  '/game/bingo': typeof protectedGameBingoRoute
+  '/room/$id': typeof protectedRoomIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,7 +99,7 @@ export interface FileRoutesById {
   '/(protected)/': typeof protectedIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/(protected)/game/$slug': typeof protectedGameSlugRoute
-  '/(protected)/game/bingo': typeof protectedGameBingoRoute
+  '/(protected)/room/$id': typeof protectedRoomIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,7 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/'
     | '/game/$slug'
-    | '/game/bingo'
+    | '/room/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -120,7 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/game/$slug'
-    | '/game/bingo'
+    | '/room/$id'
   id:
     | '__root__'
     | '/(auth)'
@@ -132,7 +132,7 @@ export interface FileRouteTypes {
     | '/(protected)/'
     | '/admin/'
     | '/(protected)/game/$slug'
-    | '/(protected)/game/bingo'
+    | '/(protected)/room/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,11 +206,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof protectedGameSlugRouteImport
       parentRoute: typeof protectedRouteRoute
     }
-    '/(protected)/game/bingo': {
-      id: '/(protected)/game/bingo'
-      path: '/game/bingo'
-      fullPath: '/game/bingo'
-      preLoaderRoute: typeof protectedGameBingoRouteImport
+    '/(protected)/room/$id': {
+      id: '/(protected)/room/$id'
+      path: '/room/$id'
+      fullPath: '/room/$id'
+      preLoaderRoute: typeof protectedRoomIdRouteImport
       parentRoute: typeof protectedRouteRoute
     }
   }
@@ -232,14 +232,14 @@ interface protectedRouteRouteChildren {
   protectedDashboardRoute: typeof protectedDashboardRoute
   protectedIndexRoute: typeof protectedIndexRoute
   protectedGameSlugRoute: typeof protectedGameSlugRoute
-  protectedGameBingoRoute: typeof protectedGameBingoRoute
+  protectedRoomIdRoute: typeof protectedRoomIdRoute
 }
 
 const protectedRouteRouteChildren: protectedRouteRouteChildren = {
   protectedDashboardRoute: protectedDashboardRoute,
   protectedIndexRoute: protectedIndexRoute,
   protectedGameSlugRoute: protectedGameSlugRoute,
-  protectedGameBingoRoute: protectedGameBingoRoute,
+  protectedRoomIdRoute: protectedRoomIdRoute,
 }
 
 const protectedRouteRouteWithChildren = protectedRouteRoute._addFileChildren(

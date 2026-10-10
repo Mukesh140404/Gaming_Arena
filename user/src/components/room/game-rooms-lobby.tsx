@@ -1,35 +1,24 @@
 import { useState, useMemo, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Users,
   Plus,
   Search,
   Lock,
-  Globe,
-  Copy,
-  Check,
   RefreshCw,
-  LogOut,
-  Trash2,
-  Play,
   KeyRound,
-  Crown,
-  Sparkles,
   Flame,
-  ArrowRight
+  EyeOff,
+  Eye
 } from "lucide-react";
 import {
   roomsOfGameQueryOptions,
-  useCreateRoomMutation,
   useJoinRoomMutation,
-  useLeaveRoomMutation,
-  useDestroyRoomMutation
-} from "@/api/room.queries";
+} from "@/hooks/useRoom";
 import type { Room, CreateRoomInput, JoinRoomInput } from "@/types/room.type";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +27,9 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import CreateRoomDialog from "../dialogs/create-room-model";
+import JoinRoomDialog from "../dialogs/join-room-model";
+import GameCard from "../game-cards";
 
 export interface GameRoomsLobbyProps {
   gameId: string;
@@ -47,7 +38,6 @@ export interface GameRoomsLobbyProps {
   maxPlayersAllowed?: number;
   description?: string;
   coverImage?: string;
-  onStartGame?: (room: Room) => void;
 }
 
 export function GameRoomsLobby({
@@ -55,8 +45,9 @@ export function GameRoomsLobby({
   gameName,
   maxPlayersAllowed = 8,
   description,
-  onStartGame,
 }: GameRoomsLobbyProps) {
+  const navigate = useNavigate();
+
   // 1. Fetch Rooms of this Game
   const {
     data: rooms = [],
@@ -65,10 +56,8 @@ export function GameRoomsLobby({
     isRefetching
   } = useQuery(roomsOfGameQueryOptions(gameId));
 
-  const createRoomMutation = useCreateRoomMutation(gameId);
   const joinRoomMutation = useJoinRoomMutation(gameId);
-  const leaveRoomMutation = useLeaveRoomMutation(gameId);
-  const destroyRoomMutation = useDestroyRoomMutation(gameId);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,9 +66,7 @@ export function GameRoomsLobby({
   // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isJoinCodeOpen, setIsJoinCodeOpen] = useState(false);
-  const [activeRoom, setActiveRoom] = useState<Room | null>(null);
   const [joinCandidate, setJoinCandidate] = useState<Room | null>(null);
-  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Forms
   const [createForm, setCreateForm] = useState<CreateRoomInput>(() => ({
@@ -110,7 +97,9 @@ export function GameRoomsLobby({
       const matchVisibility =
         visibilityFilter === "all" || r.visibility === visibilityFilter;
 
-      return matchSearch && matchVisibility;
+      const statusFilter = r.status === "waiting";
+
+      return matchSearch && matchVisibility && statusFilter;
     });
   }, [rooms, searchQuery, visibilityFilter]);
 
@@ -127,39 +116,6 @@ export function GameRoomsLobby({
     setIsCreateOpen(true);
   };
 
-  const handleCreateSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!createForm.name.trim()) return;
-
-    try {
-      const created = await createRoomMutation.mutateAsync({
-        ...createForm,
-        gameId,
-        maxPlayers: Number(createForm.maxPlayers),
-      });
-      setIsCreateOpen(false);
-      setActiveRoom(created);
-    } catch {
-      // Error handled by mutation toast
-    }
-  };
-
-  const handleJoinByCodeSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!joinCodeForm.roomCode.trim()) return;
-
-    try {
-      await joinRoomMutation.mutateAsync(joinCodeForm);
-      setIsJoinCodeOpen(false);
-      const target = rooms.find((r) => r.roomCode.toLowerCase() === joinCodeForm.roomCode.toLowerCase());
-      if (target) {
-        setActiveRoom(target);
-      }
-    } catch {
-      // Error handled by mutation
-    }
-  };
-
   const handleDirectJoin = async (room: Room) => {
     if (room.visibility === "private") {
       setJoinCandidate(room);
@@ -171,10 +127,14 @@ export function GameRoomsLobby({
       await joinRoomMutation.mutateAsync({
         roomCode: room.roomCode,
       });
-      setActiveRoom(room);
     } catch {
-      // Error handled by mutation
+      // Already in room or public entrance
     }
+
+    navigate({
+      to: "/room/$id",
+      params: { id: room.id },
+    });
   };
 
   const handlePrivateJoinSubmit = async (e: FormEvent) => {
@@ -186,33 +146,15 @@ export function GameRoomsLobby({
         roomCode: joinCandidate.roomCode,
         password: privatePasswordInput,
       });
-      const room = joinCandidate;
+      const targetId = joinCandidate.id;
       setJoinCandidate(null);
-      setActiveRoom(room);
+      navigate({
+        to: "/room/$id",
+        params: { id: targetId },
+      });
     } catch {
       // Error handled
     }
-  };
-
-  const handleLeaveRoom = async (roomId: string) => {
-    await leaveRoomMutation.mutateAsync(roomId);
-    if (activeRoom?.id === roomId) {
-      setActiveRoom(null);
-    }
-  };
-
-  const handleDestroyRoom = async (roomId: string) => {
-    await destroyRoomMutation.mutateAsync(roomId);
-    if (activeRoom?.id === roomId) {
-      setActiveRoom(null);
-    }
-  };
-
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCode(code);
-    toast.success(`Copied room code: ${code}`);
-    setTimeout(() => setCopiedCode(null), 2000);
   };
 
   return (
@@ -221,7 +163,7 @@ export function GameRoomsLobby({
       {/* Hero Banner for Game Lobby */}
       <div className="relative overflow-hidden rounded-3xl border border-white/80 bg-white/90 p-5 sm:p-7 backdrop-blur-xl shadow-lg shadow-red-950/5">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-linear-to-br from-[#FF6562]/20 via-amber-200/20 to-transparent blur-3xl" />
-        
+
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
@@ -260,7 +202,7 @@ export function GameRoomsLobby({
               onClick={handleOpenCreate}
               className="flex-1 sm:flex-none bg-[#FF6562] hover:bg-[#fa534f] text-white font-black text-xs h-10 px-5 rounded-xl shadow-md shadow-red-200 cursor-pointer"
             >
-              <Plus className="h-4 w-4 mr-1.5 stroke-[3]" />
+              <Plus className="h-4 w-4 mr-1.5 stroke-3" />
               Create Room
             </Button>
           </div>
@@ -285,31 +227,28 @@ export function GameRoomsLobby({
           <div className="flex items-center p-1 rounded-xl border border-gray-200 bg-gray-50 text-xs">
             <button
               onClick={() => setVisibilityFilter("all")}
-              className={`px-3 py-1 rounded-lg font-bold text-[11px] transition ${
-                visibilityFilter === "all"
-                  ? "bg-white text-gray-900 shadow-2xs"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+              className={`px-3 py-1 rounded-lg font-bold text-[11px] transition ${visibilityFilter === "all"
+                ? "bg-white text-gray-900 shadow-2xs"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
             >
               All ({rooms.length})
             </button>
             <button
               onClick={() => setVisibilityFilter("public")}
-              className={`px-3 py-1 rounded-lg font-bold text-[11px] transition ${
-                visibilityFilter === "public"
-                  ? "bg-white text-gray-900 shadow-2xs"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+              className={`px-3 py-1 rounded-lg font-bold text-[11px] transition ${visibilityFilter === "public"
+                ? "bg-white text-gray-900 shadow-2xs"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
             >
               Public
             </button>
             <button
               onClick={() => setVisibilityFilter("private")}
-              className={`px-3 py-1 rounded-lg font-bold text-[11px] transition ${
-                visibilityFilter === "private"
-                  ? "bg-white text-gray-900 shadow-2xs"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
+              className={`px-3 py-1 rounded-lg font-bold text-[11px] transition ${visibilityFilter === "private"
+                ? "bg-white text-gray-900 shadow-2xs"
+                : "text-gray-500 hover:text-gray-900"
+                }`}
             >
               Private
             </button>
@@ -361,104 +300,13 @@ export function GameRoomsLobby({
             const isFull = currentPlayersCount >= room.maxPlayers;
 
             return (
-              <Card
+              <GameCard
                 key={room.id}
-                className="group relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white p-5 shadow-xs hover:border-[#FF6562]/50 hover:shadow-md transition-all duration-200 flex flex-col justify-between"
-              >
-                <div>
-                  {/* Top Bar: Code Badge + Visibility */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <button
-                      type="button"
-                      onClick={() => handleCopyCode(room.roomCode)}
-                      className="group/btn flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200/70 text-gray-700 text-xs font-mono font-bold transition cursor-pointer"
-                      title="Click to copy code"
-                    >
-                      <span>#{room.roomCode}</span>
-                      {copiedCode === room.roomCode ? (
-                        <Check className="h-3 w-3 text-emerald-600" />
-                      ) : (
-                        <Copy className="h-3 w-3 text-gray-400 group-hover/btn:text-gray-700" />
-                      )}
-                    </button>
-
-                    <div className="flex items-center gap-1.5">
-                      {room.visibility === "private" ? (
-                        <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200/70 text-amber-700">
-                          <Lock className="h-3 w-3" />
-                          Private
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-sky-50 border border-sky-200/70 text-sky-700">
-                          <Globe className="h-3 w-3" />
-                          Public
-                        </span>
-                      )}
-
-                      <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        {room.status === "waiting" ? "Waiting" : room.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Room Name */}
-                  <h3 className="font-bold text-base text-[#1F2438] group-hover:text-[#FF6562] transition leading-snug">
-                    {room.name}
-                  </h3>
-
-                  {/* Player Slot Meter */}
-                  <div className="mt-3.5 space-y-1.5">
-                    <div className="flex items-center justify-between text-xs font-bold text-gray-600">
-                      <span className="flex items-center gap-1.5 text-gray-500 font-medium">
-                        <Users className="h-3.5 w-3.5 text-gray-400" />
-                        Slots Filled
-                      </span>
-                      <span className={isFull ? "text-amber-600" : "text-emerald-600"}>
-                        {currentPlayersCount} / {room.maxPlayers}
-                      </span>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          isFull ? "bg-amber-500" : "bg-[#FF6562]"
-                        }`}
-                        style={{
-                          width: `${Math.min(100, (currentPlayersCount / room.maxPlayers) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer Action */}
-                <div className="mt-5 pt-3.5 border-t border-gray-100 flex items-center gap-2">
-                  <Button
-                    onClick={() => handleDirectJoin(room)}
-                    disabled={isFull && room.status !== "waiting"}
-                    className={`flex-1 h-9 rounded-xl font-bold text-xs shadow-xs cursor-pointer ${
-                      isFull
-                        ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                        : "bg-[#FF6562] hover:bg-[#fa534f] text-white shadow-red-200"
-                    }`}
-                  >
-                    <span>{isFull ? "Room Full" : "Join Room"}</span>
-                    <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActiveRoom(room)}
-                    className="h-9 px-3 border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-medium"
-                    title="View Room Lobby"
-                  >
-                    Lobby
-                  </Button>
-                </div>
-              </Card>
+                room={room}
+                isFull={isFull}
+                currentPlayersCount={currentPlayersCount}
+                handleDirectJoin={handleDirectJoin}
+              />
             );
           })}
         </div>
@@ -467,224 +315,30 @@ export function GameRoomsLobby({
       {/* ========================================================================= */}
       {/* 2. CREATE ROOM MODAL */}
       {/* ========================================================================= */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="max-w-md w-full">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-red-50 text-[#FF6562]">
-                <Plus className="h-5 w-5" />
-              </div>
-              <div>
-                <DialogTitle>Create Room for {gameName}</DialogTitle>
-                <DialogDescription>
-                  Configure your squad lobby settings and invite friends.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
 
-          <form onSubmit={handleCreateSubmit} className="space-y-4">
-            {/* Room Name */}
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">
-                Room Name *
-              </label>
-              <Input
-                required
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                placeholder="e.g. Speed Run Arena"
-                className="h-9 text-xs"
-              />
-            </div>
-
-            {/* Room Code */}
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">
-                Room Code (Auto-generated)
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  required
-                  value={createForm.roomCode}
-                  onChange={(e) => setCreateForm({ ...createForm, roomCode: e.target.value.toUpperCase() })}
-                  className="h-9 text-xs font-mono font-bold tracking-wider"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCreateForm({
-                      ...createForm,
-                      roomCode: `GA-${Math.floor(1000 + Math.random() * 9000)}`,
-                    })
-                  }
-                  className="h-9 px-3 text-xs"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Visibility Selector */}
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1.5">
-                Visibility Mode
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCreateForm({ ...createForm, visibility: "public" })}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                    createForm.visibility === "public"
-                      ? "border-[#FF6562] bg-red-50/60 text-[#FF6562]"
-                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <Globe className="h-4 w-4" />
-                  <span>Public</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setCreateForm({ ...createForm, visibility: "private" })}
-                  className={`flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-xs font-bold transition cursor-pointer ${
-                    createForm.visibility === "private"
-                      ? "border-amber-500 bg-amber-50 text-amber-700"
-                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <Lock className="h-4 w-4" />
-                  <span>Private</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Password input if private */}
-            {createForm.visibility === "private" && (
-              <div>
-                <label className="text-xs font-bold text-gray-700 block mb-1">
-                  Room Password *
-                </label>
-                <Input
-                  type="password"
-                  required
-                  placeholder="Enter secret room password"
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                  className="h-9 text-xs"
-                />
-              </div>
-            )}
-
-            {/* Max Players */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-bold text-gray-700">
-                  Max Players: <span className="text-[#FF6562]">{createForm.maxPlayers}</span>
-                </label>
-                <span className="text-[10px] text-gray-400">Up to {maxPlayersAllowed} players</span>
-              </div>
-              <input
-                type="range"
-                min="2"
-                max={maxPlayersAllowed}
-                value={createForm.maxPlayers}
-                onChange={(e) => setCreateForm({ ...createForm, maxPlayers: Number(e.target.value) })}
-                className="w-full accent-[#FF6562] cursor-pointer"
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsCreateOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={createRoomMutation.isPending}
-                className="bg-[#FF6562] hover:bg-[#fa534f] text-white font-bold"
-              >
-                {createRoomMutation.isPending ? "Creating..." : "Create Room"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <CreateRoomDialog
+        isCreateOpen={isCreateOpen}
+        gameId={gameId}
+        setIsCreateOpen={setIsCreateOpen}
+        createForm={createForm}
+        setCreateForm={setCreateForm}
+        gameName={gameName}
+        maxPlayersAllowed={maxPlayersAllowed}
+      />
 
       {/* ========================================================================= */}
       {/* 3. JOIN WITH CODE MODAL */}
       {/* ========================================================================= */}
-      <Dialog open={isJoinCodeOpen} onOpenChange={setIsJoinCodeOpen}>
-        <DialogContent className="max-w-md w-full">
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-gray-100 text-gray-800">
-                <KeyRound className="h-5 w-5" />
-              </div>
-              <div>
-                <DialogTitle>Join Room by Code</DialogTitle>
-                <DialogDescription>
-                  Enter the room invite code to join directly.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
 
-          <form onSubmit={handleJoinByCodeSubmit} className="space-y-4">
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">
-                Room Code *
-              </label>
-              <Input
-                required
-                placeholder="e.g. GA-4921"
-                value={joinCodeForm.roomCode}
-                onChange={(e) => setJoinCodeForm({ ...joinCodeForm, roomCode: e.target.value.toUpperCase() })}
-                className="h-10 text-sm font-mono font-bold uppercase tracking-wider"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-gray-700 block mb-1">
-                Password (if private room)
-              </label>
-              <Input
-                type="password"
-                placeholder="Optional room password"
-                value={joinCodeForm.password}
-                onChange={(e) => setJoinCodeForm({ ...joinCodeForm, password: e.target.value })}
-                className="h-9 text-xs"
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setIsJoinCodeOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={joinRoomMutation.isPending}
-                className="bg-[#FF6562] hover:bg-[#fa534f] text-white font-bold"
-              >
-                {joinRoomMutation.isPending ? "Joining..." : "Enter Room"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <JoinRoomDialog
+        isJoinCodeOpen={isJoinCodeOpen}
+        setIsJoinCodeOpen={setIsJoinCodeOpen}
+        gameId={gameId}
+        joinCodeForm={joinCodeForm}
+        setJoinCodeForm={setJoinCodeForm}
+        rooms={rooms}
+        maxPlayersAllowed={maxPlayersAllowed}
+      />
 
       {/* ========================================================================= */}
       {/* 4. PRIVATE ROOM PASSWORD PROMPT MODAL */}
@@ -710,14 +364,27 @@ export function GameRoomsLobby({
               <label className="text-xs font-bold text-gray-700 block mb-1">
                 Password *
               </label>
-              <Input
-                type="password"
-                required
-                placeholder="Enter room password"
-                value={privatePasswordInput}
-                onChange={(e) => setPrivatePasswordInput(e.target.value)}
-                className="h-10 text-sm"
-              />
+              <div className="relative flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPassword(!showLoginPassword)}
+                  className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
+                >
+                  {showLoginPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+                <input
+                  type={showLoginPassword ? "text" : "password"}
+                  value={privatePasswordInput}
+                  required
+                  onChange={(e) => setPrivatePasswordInput(e.target.value)}
+                  placeholder="Enter room password"
+                  className="w-full rounded-xl border border-gray-200 bg-white/95 py-2.5 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 shadow-xs focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition"
+                />
+              </div>
             </div>
 
             <DialogFooter className="pt-2">
@@ -739,150 +406,6 @@ export function GameRoomsLobby({
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ========================================================================= */}
-      {/* 5. ACTIVE ROOM LOBBY DETAILS MODAL */}
-      {/* ========================================================================= */}
-      <Dialog open={!!activeRoom} onOpenChange={(open) => !open && setActiveRoom(null)}>
-        <DialogContent className="max-w-lg w-full">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-red-50 text-[#FF6562]">
-                  <Sparkles className="h-5 w-5" />
-                </div>
-                <div>
-                  <DialogTitle>{activeRoom?.name}</DialogTitle>
-                  <DialogDescription>
-                    Game: <span className="font-semibold text-gray-700">{gameName}</span>
-                  </DialogDescription>
-                </div>
-              </div>
-
-              {activeRoom && (
-                <button
-                  type="button"
-                  onClick={() => handleCopyCode(activeRoom.roomCode)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-mono font-bold text-gray-800 transition"
-                  title="Copy code"
-                >
-                  <span>#{activeRoom.roomCode}</span>
-                  {copiedCode === activeRoom.roomCode ? (
-                    <Check className="h-3 w-3 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-3 w-3 text-gray-500" />
-                  )}
-                </button>
-              )}
-            </div>
-          </DialogHeader>
-
-          {activeRoom && (
-            <div className="space-y-4">
-              {/* Status Bar */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-100">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="text-xs font-bold text-gray-700">
-                    Status: <span className="text-emerald-600 capitalize">{activeRoom.status}</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs font-bold text-gray-600">
-                  <Users className="h-3.5 w-3.5 text-gray-400" />
-                  <span>
-                    {(activeRoom.roomPlayersList?.length || 1)} / {activeRoom.maxPlayers} Players
-                  </span>
-                </div>
-              </div>
-
-              {/* Players List in Lobby */}
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider block">
-                  Players in Room
-                </span>
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {(activeRoom.roomPlayersList && activeRoom.roomPlayersList.length > 0
-                    ? activeRoom.roomPlayersList
-                    : [
-                        {
-                          id: "host-player-1",
-                          roomId: activeRoom.id,
-                          userId: activeRoom.hostId,
-                          role: "host" as const,
-                          status: "active" as const,
-                          joinedAt: activeRoom.createdAt,
-                          name: "Room Host",
-                        },
-                      ]
-                  ).map((player, idx) => (
-                    <div
-                      key={player.id || idx}
-                      className="flex items-center justify-between p-2.5 rounded-xl border border-gray-100 bg-white"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#FF6562] font-bold text-xs">
-                          {player.name ? player.name.charAt(0).toUpperCase() : `P${idx + 1}`}
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-gray-800 block">
-                            {player.name || `Player ${idx + 1}`}
-                          </span>
-                          <span className="text-[10px] text-gray-400">
-                            {player.role === "host" ? "Room Leader" : "Challenger"}
-                          </span>
-                        </div>
-                      </div>
-
-                      {player.role === "host" && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                          <Crown className="h-3 w-3" /> Host
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 border-t border-gray-100 flex items-center justify-between gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleLeaveRoom(activeRoom.id)}
-                  className="border-red-200 text-red-600 hover:bg-red-50 h-9 rounded-xl text-xs font-bold"
-                >
-                  <LogOut className="h-3.5 w-3.5 mr-1" />
-                  Leave Room
-                </Button>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDestroyRoom(activeRoom.id)}
-                    className="border-gray-200 text-gray-600 hover:bg-gray-100 h-9 rounded-xl text-xs font-medium"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1" />
-                    Destroy
-                  </Button>
-
-                  {onStartGame && (
-                    <Button
-                      size="sm"
-                      onClick={() => onStartGame(activeRoom)}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-9 rounded-xl text-xs shadow-xs"
-                    >
-                      <Play className="h-3.5 w-3.5 mr-1 fill-white" />
-                      Start Game
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
 

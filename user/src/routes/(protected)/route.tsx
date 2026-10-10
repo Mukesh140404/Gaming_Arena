@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import Navbar from '../../components/navbar'
 import { PROJECT_NAME } from '../../constants'
-import { currentUserQueryOptions } from '@/api/auth.queries';
+import { currentUserQueryOptions } from '@/hooks/useAuth';
 
 export const Route = createFileRoute('/(protected)')({
   beforeLoad: async ({ context }) => {

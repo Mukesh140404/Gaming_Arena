@@ -6,8 +6,8 @@ const router = Router()
 
 router.post("/", authMiddleware, createRoom);
 router.post("/join", authMiddleware, joinRoom);
-router.post("/leave/:roomId", authMiddleware, leaveRoom);
-router.post("/destroy/:roomId", authMiddleware, destroyRoom);
+router.get("/destroy/:roomId", authMiddleware, destroyRoom);
+router.get("/leave/:roomId", authMiddleware, leaveRoom);
 router.get("/game/:gameId", authMiddleware, getAllRoomsOfGame);
 router.get("/:roomId", authMiddleware, getRoom);
 

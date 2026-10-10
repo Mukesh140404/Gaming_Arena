@@ -11,7 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { gamesQueryOptions } from "../../api/game.queries";
+import { gamesQueryOptions } from "@/hooks/useGame";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useAuth";
 
