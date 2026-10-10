@@ -1,22 +1,25 @@
-import { useState } from "react"
+import { useState } from "react";
+import { useLogout } from "@/hooks/useAuth";
 
 interface NavbarProps {
-  projectName?: string
-  username?: string
-  userRole?: string
+  projectName?: string;
+  username?: string;
+  userRole?: string;
+  email?: string;
 }
 
 export default function Navbar({
-  projectName = 'GAMING ARENA',
-  username = 'Rohit Negi',
-  userRole = 'Lead Developer'
+  projectName = "GAMING ARENA",
+  username = "Player",
+  userRole = "Player",
+  email,
 }: NavbarProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const logoutMutation = useLogout();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#F2D7D2]/80 bg-white/80 backdrop-blur-xl shadow-xs shadow-red-950/5">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-
         <div className="flex items-center gap-4">
           <div className="group relative flex items-center gap-3">
             <div className="absolute -inset-1 rounded-xl bg-linear-to-r from-[#FF6562] via-[#FFA194] to-[#FFD7D0] opacity-30 blur-md transition duration-500 group-hover:opacity-70" />
@@ -44,7 +47,6 @@ export default function Navbar({
         </div>
 
         <div className="flex items-center gap-3 sm:gap-5">
-
           <button
             type="button"
             aria-label="Notifications"
@@ -65,15 +67,15 @@ export default function Navbar({
               className="flex items-center gap-3 rounded-2xl border border-gray-200/80 bg-white/90 p-1.5 pr-3 transition-all hover:border-[#FF6562]/40 hover:bg-[#FCECE9]/40 cursor-pointer shadow-xs"
             >
               <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-linear-to-tr from-[#FF6562] to-[#FFA194] text-xs font-bold text-white shadow-sm shadow-red-200">
-                {username.charAt(0).toUpperCase()}
+                {username ? username.charAt(0).toUpperCase() : "P"}
               </div>
 
               <div className="hidden sm:flex flex-col text-left">
                 <span className="text-xs font-bold text-[#1F2438]">{username}</span>
-                <span className="text-[10px] font-medium text-gray-500">{userRole}</span>
+                <span className="text-[10px] font-medium text-gray-500 capitalize">{userRole}</span>
               </div>
               <svg
-                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180 text-[#E85D56]' : ''}`}
+                className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${dropdownOpen ? "rotate-180 text-[#E85D56]" : ""}`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -86,26 +88,21 @@ export default function Navbar({
               <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-[#F2D7D2] bg-white/95 p-1.5 shadow-2xl shadow-red-950/10 backdrop-blur-xl animate-in fade-in slide-in-from-top-2">
                 <div className="px-3 py-2 border-b border-gray-100">
                   <p className="text-xs font-bold text-[#1F2438]">{username}</p>
-                  <p className="text-[11px] text-gray-500 truncate">user@example.com</p>
-                </div>
-                <div className="py-1">
-                  <a href="#profile" className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-[#FCECE9] hover:text-[#E85D56] transition">
-                    Account Settings
-                  </a>
-                  <a href="#preferences" className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-[#FCECE9] hover:text-[#E85D56] transition">
-                    Preferences
-                  </a>
+                  {email && <p className="text-[11px] text-gray-500 truncate">{email}</p>}
                 </div>
                 <div className="border-t border-gray-100 pt-1">
-                  <button className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#E85D56] hover:bg-red-50 transition cursor-pointer">
+                  <button
+                    onClick={() => logoutMutation.mutate()}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#E85D56] hover:bg-red-50 transition cursor-pointer"
+                  >
                     Log out
                   </button>
                 </div>
               </div>
             )}
-          </div>    
+          </div>
         </div>
       </div>
     </header>
-  )
+  );
 }

@@ -28,6 +28,8 @@ export const Route = createFileRoute('/(protected)')({
 })
 
 function ProtectedLayout() {
+  const { user } = Route.useRouteContext();
+
   return (
     <div className="relative min-h-screen bg-[#FDF0EE] text-[#1F2438] flex flex-col selection:bg-[#FF6562]/20 selection:text-[#E85D56]">
 
@@ -38,7 +40,12 @@ function ProtectedLayout() {
         <div className="absolute -bottom-40 left-10 h-96 w-96 rounded-full bg-[#FFD7D0]/40 blur-3xl" />
       </div>
 
-      <Navbar projectName={PROJECT_NAME} username="Rohit Negi" userRole="Frontend Lead" />
+      <Navbar
+        projectName={PROJECT_NAME}
+        username={user?.name || "Player"}
+        userRole={user?.role === "admin" ? "Admin" : "Player"}
+        email={user?.email}
+      />
 
       <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <Outlet />

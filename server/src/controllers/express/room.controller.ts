@@ -1,12 +1,15 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../lib/asyncHandler.js";
 import { createRoomSchema, rooms } from "../../db/schema/rooms.js";
+import { games } from "../../db/schema/games.js";
 import { roomPlayers } from "../../db/schema/roomPlayers.js";
 import { db } from "../../db/index.js";
 import { and, eq } from "drizzle-orm";
 import { ApiError } from "../../lib/ApiError.js";
 import { ApiResponse } from "../../lib/ApiResponse.js";
 import { comparePassword, hashPassword } from "../../utils/password.js";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const createRoom = asyncHandler(async (req: Request, res: Response) => {
     const parsedBody = createRoomSchema.parse(req.body);
@@ -167,6 +170,10 @@ const destroyRoom = asyncHandler(async (req: Request, res: Response) => {
         throw new ApiError(401, "Unauthorized");
     }
 
+    if (!roomId || !UUID_REGEX.test(roomId)) {
+        throw new ApiError(404, "Room not found");
+    }
+
     const [existingRoom] = await db
         .select()
         .from(rooms)
@@ -197,6 +204,10 @@ const destroyRoom = asyncHandler(async (req: Request, res: Response) => {
 const getRoom = asyncHandler(async (req: Request, res: Response) => {
     const roomId = req.params.roomId as string;
 
+    if (!roomId || !UUID_REGEX.test(roomId)) {
+        throw new ApiError(404, "Room not found");
+    }
+
     const [room] = await db
         .select()
         .from(rooms)
@@ -220,10 +231,34 @@ const getRoom = asyncHandler(async (req: Request, res: Response) => {
 
 const getAllRoomsOfGame = asyncHandler(async (req: Request, res: Response) => {
     const gameId = req.params.gameId as string;
+    let targetGameId = gameId;
+
+    if (!gameId) {
+        return res
+            .status(200)
+            .json(new ApiResponse(200, [], "All Rooms fetched for the game"));
+    }
+
+    // If gameId is not a UUID, check if it's a slug
+    if (!UUID_REGEX.test(gameId)) {
+        const [foundGame] = await db
+            .select()
+            .from(games)
+            .where(eq(games.slug, gameId));
+
+        if (foundGame) {
+            targetGameId = foundGame.id;
+        } else {
+            return res
+                .status(200)
+                .json(new ApiResponse(200, [], "All Rooms fetched for the game"));
+        }
+    }
+
     const roomsList = await db
         .select()
         .from(rooms)
-        .where(eq(rooms.gameId, gameId));
+        .where(eq(rooms.gameId, targetGameId));
 
     return res
         .status(200)
