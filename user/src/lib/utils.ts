@@ -1,13 +1,18 @@
-import { leaveRoomApi,destroyRoomApi } from "@/api/room";
-import { useCurrentUser } from "@/hooks/useAuth";
-import { useContext } from "react";
+import { destroyRoomApi, fetchRoomById, leaveRoomApi } from "@/api/room"
 
-export const onLeaveRoomLobby = async (roomId: string,userId:string) => {
-   try {
-    const user = useCurrentUser()
-    const room = use 
-    await leaveRoomApi(roomId);
-  } catch (error) {
-    console.log("Error while leaving room", error);
-  }
+export { cn } from "cn"
+
+export const onLeaveRoomLobby = async (
+    roomId: string,
+    userId: string
+) => {
+    const room = await fetchRoomById(roomId)
+
+    if (!room) return
+
+    if (room.hostId === userId) {
+        destroyRoomApi(roomId)
+    } else {
+        leaveRoomApi(roomId)
+    }
 }
