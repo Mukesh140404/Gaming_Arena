@@ -1,18 +1,35 @@
 import { wsServer } from "./index.js";
 import {
   ConnectTheClient,
-  DisconnectTheClient,
-  createRoom,
-  getRoom,
+  // DisconnectTheClient,
+  // createRoom,
+  // getRoom,
   joinRoom,
   leaveRoom,
   chatOnRoom,
-} from "../src/lib.js";
+} from "../src/controllers/websockets/room.js";
+import { verifyToken } from "./utils/jwt.js";
 
-let count = 1;
+wsServer.on("connection", (webSocket, request) => {
+  const cookies = request.headers.cookie;
 
-wsServer.on("connection", (webSocket) => {
-  const ClientConnectionId = ConnectTheClient(webSocket, count);
+  if (!cookies) {
+    webSocket.close();
+    return;
+  }
+
+  const token = cookies
+    .split(";")
+    .find((cookie) => cookie.trim().startsWith("token="))
+    ?.split("=")[1];
+
+  if (!token) {
+    webSocket.close();
+    return;
+  }
+  const payload = verifyToken(token);
+  const userId = payload.id;
+  const ClientConnectionId = ConnectTheClient(webSocket, userId);
   webSocket.send(
     JSON.stringify({
       type: "connection-id",
@@ -20,7 +37,7 @@ wsServer.on("connection", (webSocket) => {
     }),
   );
   console.log(`Client ${ClientConnectionId} is connected`);
-  count = count + 1;
+
   webSocket.on("message", (data) => {
     const rawData = JSON.parse(data.toString());
 
@@ -28,31 +45,31 @@ wsServer.on("connection", (webSocket) => {
 
     switch (messageType) {
       case "create-room":
-        const roomId = createRoom(ClientConnectionId);
-        webSocket.send(
-          JSON.stringify({
-            type: "room-created",
-            roomId,
-          }),
-        );
+        // const roomId = createRoom(ClientConnectionId);
+        // webSocket.send(
+        //   JSON.stringify({
+        //     type: "room-created",
+        //     roomId,
+        //   }),
+        // );
         break;
       case "join-room":
         joinRoom(ClientConnectionId, rawData.roomId);
         webSocket.send(
           JSON.stringify({
             type: "room-joined",
-            roomId:rawData.roomId,
+            roomId: rawData.roomId,
           }),
         );
         break;
       case "get-room":
-        const room = getRoom(rawData.roomId);
-        webSocket.send(
-          JSON.stringify({
-            type: "get-room",
-            room,
-          }),
-        );
+        // const room = getRoom(rawData.roomId);
+        // webSocket.send(
+        //   JSON.stringify({
+        //     type: "get-room",
+        //     room,
+        //   }),
+        // );
         break;
       case "leave-room":
         leaveRoom(ClientConnectionId, rawData.roomId);
@@ -66,7 +83,7 @@ wsServer.on("connection", (webSocket) => {
               JSON.stringify({
                 type: "message",
                 message: rawData.message,
-                roomChat:false,
+                roomChat: false,
                 from: ClientConnectionId,
               }),
             );
@@ -79,7 +96,7 @@ wsServer.on("connection", (webSocket) => {
   });
   webSocket.on("close", () => {
     console.log(`Client ${ClientConnectionId} is disconnected`);
-    DisconnectTheClient(ClientConnectionId);
+    // DisconnectTheClient(ClientConnectionId);
     wsServer.clients.forEach((client) => {
       client.send(`Client ${ClientConnectionId} is disconnected`);
     });

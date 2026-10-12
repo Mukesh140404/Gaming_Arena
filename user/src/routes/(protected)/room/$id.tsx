@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -20,21 +20,23 @@ import {
   UserCheck
 } from "lucide-react";
 import { singleRoomQueryOptions, useLeaveRoomMutation, useDestroyRoomMutation } from "@/hooks/useRoom";
-import { useCurrentUser } from "@/hooks/useAuth";
+import { currentUserQueryOptions, useCurrentUser } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { leaveRoomApi } from "@/api/room";
+import { onLeaveRoomLobby } from "@/lib/utils";
+import { slugify } from "@/lib/slug";
 
 export const Route = createFileRoute("/(protected)/room/$id")({
-  beforeLoad:async({context})=>{
-    
-  },
   component: SingleRoomLobbyRoute,
-  onLeave: async ({ params }) => {
+  onLeave: async ({ params, context }) => {
     const roomId = params.id;
-      await onLeaveRoomLobby(roomId);
+    const user = await context.queryClient.ensureQueryData(
+      currentUserQueryOptions,
+    );
+    console.log("user", user)
+    await onLeaveRoomLobby(roomId, user.id);
   },
 });
 
@@ -58,6 +60,15 @@ function SingleRoomLobbyRoute() {
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (room?.status === "finished") {
+      navigate({
+        to: "/dashboard"
+      })
+    }
+  }, [room])
+
 
   const handleCopyCode = () => {
     if (!room?.roomCode) return;
@@ -135,6 +146,7 @@ function SingleRoomLobbyRoute() {
   const players = room.roomPlayersList || [];
   const activePlayers = players.filter((p) => p.status === "active");
   const emptySlotsCount = Math.max(0, room.maxPlayers - activePlayers.length);
+
 
   return (
     <div className="space-y-6 pb-12">
@@ -275,8 +287,8 @@ function SingleRoomLobbyRoute() {
                 <Card
                   key={player.id}
                   className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 ${isCurrent
-                      ? "border-[#FF6562]/50 bg-linear-to-br from-white to-[#FCECE9]/40 shadow-xs"
-                      : "border-gray-200/80 bg-white"
+                    ? "border-[#FF6562]/50 bg-linear-to-br from-white to-[#FCECE9]/40 shadow-xs"
+                    : "border-gray-200/80 bg-white"
                     }`}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -284,8 +296,8 @@ function SingleRoomLobbyRoute() {
                       {/* Avatar */}
                       <div
                         className={`relative flex h-12 w-12 items-center justify-center rounded-2xl font-black text-sm shadow-xs ${isPlayerHost
-                            ? "bg-linear-to-tr from-amber-400 to-amber-500 text-white"
-                            : "bg-linear-to-tr from-[#FF6562] to-[#FFA194] text-white"
+                          ? "bg-linear-to-tr from-amber-400 to-amber-500 text-white"
+                          : "bg-linear-to-tr from-[#FF6562] to-[#FFA194] text-white"
                           }`}
                       >
                         {playerName.charAt(0).toUpperCase()}
@@ -384,8 +396,8 @@ function SingleRoomLobbyRoute() {
                   toast.success(isReady ? "Marked as Not Ready" : "You are READY!");
                 }}
                 className={`w-full h-11 rounded-xl text-xs font-black cursor-pointer transition ${isReady
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 <UserCheck className="h-4 w-4 mr-1.5" />
