@@ -42,6 +42,12 @@ export interface CreateRoomInput {
   passwordHash?: string;
   maxPlayers: number;
 }
+export interface UpdateRoomInput {
+  roomId?:string;
+  status?:RoomStatus;
+  startedAt?: string | Date;
+  finishedAt?: string | Date;
+}
 
 export interface JoinRoomInput {
   roomCode: string;

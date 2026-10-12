@@ -1,3 +1,7 @@
+import type { Games } from "@/constants";
+
+export type GameType = typeof Games[number];
+
 export interface Game {
   id: string;
   name: string;

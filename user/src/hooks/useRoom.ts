@@ -6,8 +6,9 @@ import {
   joinRoomApi,
   leaveRoomApi,
   destroyRoomApi,
+  updateRoomApi,
 } from "../api/room";
-import type { CreateRoomInput, JoinRoomInput } from "../types/room.type";
+import type { CreateRoomInput, JoinRoomInput, UpdateRoomInput } from "../types/room.type";
 import { toast } from "sonner";
 
 export const roomsOfGameQueryOptions = (gameId: string) =>
@@ -39,6 +40,23 @@ export function useCreateRoomMutation(gameId?: string) {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message || err?.message || "Failed to create room");
+    },
+  });
+}
+
+export function useUpdateRoomMutation(gameId?: string){
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateRoomInput) => updateRoomApi(input),
+    onSuccess: (updatedRoom) => {
+      queryClient.invalidateQueries({ queryKey: ["rooms"] });
+      if (gameId) {
+        queryClient.invalidateQueries({ queryKey: ["rooms", "game", gameId] });
+      }
+      toast.success(`Room "${updatedRoom.name}" updated successfully!`);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update room");
     },
   });
 }

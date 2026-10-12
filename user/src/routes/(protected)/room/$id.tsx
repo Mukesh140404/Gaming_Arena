@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { LoaderCircle } from "lucide-react";
+import { motion } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -13,20 +15,21 @@ import {
   Lock,
   Globe,
   Sparkles,
-  ShieldCheck,
   RefreshCw,
   Clock,
   Gamepad2,
-  UserCheck
+  UserCheck,
 } from "lucide-react";
-import { singleRoomQueryOptions, useLeaveRoomMutation, useDestroyRoomMutation } from "@/hooks/useRoom";
+import { singleRoomQueryOptions, useLeaveRoomMutation, useDestroyRoomMutation, useUpdateRoomMutation } from "@/hooks/useRoom";
 import { currentUserQueryOptions, useCurrentUser } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { onLeaveRoomLobby } from "@/lib/utils";
-import { slugify } from "@/lib/slug";
+import { RoomMessageBox } from "@/components/room/room-message-box";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import GameWrapper from "@/games/game-wrapper";
 
 export const Route = createFileRoute("/(protected)/room/$id")({
   component: SingleRoomLobbyRoute,
@@ -45,8 +48,6 @@ function SingleRoomLobbyRoute() {
   const navigate = useNavigate();
 
   const { data: currentUser } = useCurrentUser();
-
-  // Fetches single room with 5-second polling (refetchInterval: 5000 in singleRoomQueryOptions)
   const {
     data: room,
     isLoading,
@@ -57,9 +58,13 @@ function SingleRoomLobbyRoute() {
 
   const leaveRoomMutation = useLeaveRoomMutation(room?.gameId);
   const destroyRoomMutation = useDestroyRoomMutation(room?.gameId);
-
+  const updateRoomMutation = useUpdateRoomMutation();
   const [copiedCode, setCopiedCode] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [showGame, setShowGame] = useState(false);
+
+  const { connected, sendMessage, roomMessages, isGameStarted } = useWebSocket();
+  const currentRoomMessages = roomMessages.filter((m) => m.roomId === id);
 
   useEffect(() => {
     if (room?.status === "finished") {
@@ -68,6 +73,27 @@ function SingleRoomLobbyRoute() {
       })
     }
   }, [room])
+
+  useEffect(() => {
+    if (id && connected) {
+      sendMessage({
+        type: "JOIN_ROOM",
+        roomId: id,
+      });
+    }
+  }, [id, connected, sendMessage]);
+  useEffect(() => {
+    if (!isGameStarted) {
+      setShowGame(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowGame(true);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [isGameStarted]);
 
 
   const handleCopyCode = () => {
@@ -97,6 +123,33 @@ function SingleRoomLobbyRoute() {
       navigate({ to: "/dashboard" });
     }
   };
+
+  const handleStartGame = async () => {
+    try {
+      await updateRoomMutation.mutateAsync({
+        roomId: room?.id,
+        status: "started",
+      });
+      sendMessage({
+        type: "START_GAME",
+        roomId: id,
+        gameId: room?.gameId
+      })
+    }
+    catch { }
+  }
+
+
+  const handleSendRoomMessage = (message: string) => {
+    if (!message) return;
+    sendMessage({
+      type: "ROOM_CHAT",
+      roomId: id,
+      message,
+      connectionId: currentUser?.id,
+    });
+  };
+
 
   // 1. Loading State
   if (isLoading) {
@@ -138,6 +191,45 @@ function SingleRoomLobbyRoute() {
         </Link>
       </div>
     );
+  }
+
+  if (isGameStarted && !showGame) {
+    return (
+
+
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          >
+            <LoaderCircle className="h-10 w-10 text-primary" />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
+            transition={{
+              duration: 0.8,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+            className="text-sm text-muted-foreground"
+          >
+            Game starting...
+          </motion.div>
+        </div>
+      </div>
+    );
+
+  }
+
+  if (isGameStarted && showGame) {
+    return <GameWrapper gameId={room.gameId} sendMessage={sendMessage} />
   }
 
   const isHost =
@@ -258,7 +350,7 @@ function SingleRoomLobbyRoute() {
       {/* Players Section & Match Room Arena */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Players Roster */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FCECE9] text-[#E85D56]">
@@ -275,7 +367,7 @@ function SingleRoomLobbyRoute() {
           </div>
 
           {/* Active Players Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 gap-3.5">
             {activePlayers.map((player) => {
               const isPlayerHost = player.role === "host";
               const isCurrent = player.userId === currentUser?.id;
@@ -366,15 +458,14 @@ function SingleRoomLobbyRoute() {
         </div>
 
         {/* Right Col: Host / Player Control Panel */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#FCECE9] text-[#E85D56]">
-              <ShieldCheck className="h-4 w-4" />
-            </div>
-            <h2 className="text-lg font-black text-[#1F2438]">Session Controls</h2>
-          </div>
+        <div className="space-y-4 lg:col-span-2 flex gap-3">
+          <RoomMessageBox
+            messages={currentRoomMessages}
+            handleSendRoomMessage={handleSendRoomMessage}
+            currentUserId={currentUser?.id}
+          />
 
-          <Card className="rounded-3xl border border-gray-200/80 bg-white p-5 shadow-xs space-y-4">
+          <Card className="rounded-3xl flex-1 border border-gray-200/80 bg-white p-5 shadow-xs space-y-4">
             <div className="space-y-2">
               <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
                 Session Status
@@ -410,6 +501,7 @@ function SingleRoomLobbyRoute() {
               <Button
                 onClick={() => {
                   toast.success("Starting match session! Launching game...");
+                  handleStartGame();
                 }}
                 className="w-full h-12 rounded-2xl bg-[#FF6562] hover:bg-[#fa534f] text-white font-black text-xs shadow-md shadow-red-200 cursor-pointer"
               >

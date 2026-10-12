@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../../lib/asyncHandler.js";
-import { createRoomSchema, rooms } from "../../db/schema/rooms.js";
+import { createRoomSchema, rooms, updateRoomSchema } from "../../db/schema/rooms.js";
 import { games } from "../../db/schema/games.js";
 import { users } from "../../db/schema/users.js";
 import { roomPlayers } from "../../db/schema/roomPlayers.js";
 import { db } from "../../db/index.js";
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { ApiError } from "../../lib/ApiError.js";
 import { ApiResponse } from "../../lib/ApiResponse.js";
 import { comparePassword, hashPassword } from "../../utils/password.js";
@@ -53,11 +53,58 @@ const createRoom = asyncHandler(async (req: Request, res: Response) => {
         userId: hostId,
         role: "host",
         status: "active"
-    }).catch(() => {});
+    }).catch(() => { });
 
     return res
         .status(201)
         .json(new ApiResponse(201, createdRoom, "Room created successfully"))
+})
+
+const updateRoom = asyncHandler(async (req: Request, res: Response) => {
+    const parsedBody = updateRoomSchema.parse(req.body);
+    const roomId = req.params.roomId as string;
+    if (!roomId) {
+        throw new ApiError(400, "RoomId is Required")
+    }
+    const [existingRoom] = await db
+        .select()
+        .from(rooms)
+        .where(eq(rooms.id, roomId))
+
+    if (!existingRoom) {
+        throw new ApiError(404, "Room not found")
+    }
+    if (existingRoom.hostId !== req.user?.id) {
+        throw new ApiError(401, "Unauthorized")
+    }
+
+    const updateVal = {
+        status: parsedBody.status,
+        startedAt: parsedBody.status === "started" ? new Date() : null,
+        finishedAt: parsedBody.status === "finished" ? new Date() : null,
+    };
+
+    // Remove undefined values so we only update what was actually sent
+    const cleanUpdate = Object.fromEntries(
+        Object.entries(updateVal).filter(([, value]) => value !== undefined),
+    );
+
+    if (Object.keys(cleanUpdate).length === 0) {
+        throw new ApiError(400, "No valid fields to update");
+    }
+
+
+    const [updatedRoom] = await db
+    .update(rooms)
+    .set(cleanUpdate)
+    .where(eq(rooms.id, roomId))
+    .returning();
+
+    const {passwordHash,...safeData} = updatedRoom;
+
+    return res
+        .status(201)
+        .json(new ApiResponse(201, safeData, "Room updated successfully"))
 })
 
 const joinRoom = asyncHandler(async (req: Request, res: Response) => {
@@ -84,7 +131,7 @@ const joinRoom = asyncHandler(async (req: Request, res: Response) => {
         ? await comparePassword(password, existingRoom.passwordHash)
         : false
 
-    if(existingRoom.visibility ==="private" && !isPasswordValid){
+    if (existingRoom.visibility === "private" && !isPasswordValid) {
         throw new ApiError(401, "Invalid password");
     }
     const [existingPlayer] = await db
@@ -266,14 +313,59 @@ const getAllRoomsOfGame = asyncHandler(async (req: Request, res: Response) => {
         }
     }
 
+    // const roomsList = await db
+    //     .select()
+    //     .from(rooms)
+    //     .where(and(eq(rooms.gameId, targetGameId),eq(rooms.status,"waiting")));
+
     const roomsList = await db
-        .select()
+        .select({
+            id: rooms.id,
+            roomCode: rooms.roomCode,
+            gameId: rooms.gameId,
+            hostId: rooms.hostId,
+            name: rooms.name,
+            visibility: rooms.visibility,
+            status: rooms.status,
+            maxPlayers: rooms.maxPlayers,
+            createdAt: rooms.createdAt,
+            startedAt: rooms.startedAt,
+            finishedAt: rooms.finishedAt,
+            activePlayersCount: count(roomPlayers.id),
+        })
         .from(rooms)
-        .where(and(eq(rooms.gameId, targetGameId),eq(rooms.status,"waiting")));
+        .leftJoin(
+            roomPlayers,
+            and(
+                eq(roomPlayers.roomId, rooms.id),
+                eq(roomPlayers.status, "active")
+            )
+        )
+        .where(
+            and(
+                eq(rooms.gameId, targetGameId),
+                eq(rooms.status, "waiting")
+            )
+        )
+        .groupBy(
+            rooms.id,
+            rooms.roomCode,
+            rooms.gameId,
+            rooms.hostId,
+            rooms.name,
+            rooms.visibility,
+            rooms.status,
+            rooms.maxPlayers,
+            rooms.createdAt,
+            rooms.startedAt,
+            rooms.finishedAt
+        );
 
     return res
         .status(200)
         .json(new ApiResponse(200, roomsList || [], "All Rooms fetched for the game"))
 })
 
-export { createRoom, joinRoom, leaveRoom, destroyRoom, getRoom, getAllRoomsOfGame }
+
+
+export { createRoom, joinRoom, leaveRoom, destroyRoom, getRoom, getAllRoomsOfGame,updateRoom }

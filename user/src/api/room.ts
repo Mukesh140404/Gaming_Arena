@@ -1,10 +1,10 @@
 import { api } from "./axios";
-import type { Room, CreateRoomInput, JoinRoomInput, RoomPlayer } from "../types/room.type";
+import type { Room, CreateRoomInput, JoinRoomInput, RoomPlayer, UpdateRoomInput } from "../types/room.type";
 
 // 1. Create Room (POST /rooms)
 export async function createRoomApi(input: CreateRoomInput): Promise<Room> {
   const generatedCode = input.roomCode || "RM-" + Math.random().toString(36).substring(2, 7).toUpperCase();
-  
+
   const payload = {
     name: input.name,
     gameId: input.gameId,
@@ -19,6 +19,16 @@ export async function createRoomApi(input: CreateRoomInput): Promise<Room> {
     return res.data.data;
   }
   throw new Error("Failed to create room");
+}
+
+export async function updateRoomApi(input: UpdateRoomInput): Promise<Room> {
+
+  const res = await api.patch(`/rooms/${input.roomId}`, input)
+  if (res.data?.data) {
+    return res.data.data;
+  }
+  throw new Error("Failed to update room");
+
 }
 
 // 2. Get All Rooms of Game (GET /rooms/game/:gameId)

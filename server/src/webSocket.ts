@@ -1,104 +1,77 @@
-import { wsServer } from "./index.js";
 import {
   ConnectTheClient,
-  // DisconnectTheClient,
-  // createRoom,
-  // getRoom,
+  DisconnectTheClient,
   joinRoom,
   leaveRoom,
   chatOnRoom,
+  startGame,
 } from "../src/controllers/websockets/room.js";
+import { broadCastMessage } from "./controllers/websockets/brodcast.js";
+import { gameAction } from "./controllers/websockets/game.js";
 import { verifyToken } from "./utils/jwt.js";
+import type { WebSocketServer } from "ws";
 
-wsServer.on("connection", (webSocket, request) => {
-  const cookies = request.headers.cookie;
+export const registerWebSocketHandlers = (wsServer: WebSocketServer) => {
 
-  if (!cookies) {
-    webSocket.close();
-    return;
-  }
+  wsServer.on("connection", (webSocket, request) => {
+    const cookies = request.headers.cookie;
 
-  const token = cookies
-    .split(";")
-    .find((cookie) => cookie.trim().startsWith("token="))
-    ?.split("=")[1];
-
-  if (!token) {
-    webSocket.close();
-    return;
-  }
-  const payload = verifyToken(token);
-  const userId = payload.id;
-  const ClientConnectionId = ConnectTheClient(webSocket, userId);
-  webSocket.send(
-    JSON.stringify({
-      type: "connection-id",
-      connectionId: ClientConnectionId,
-    }),
-  );
-  console.log(`Client ${ClientConnectionId} is connected`);
-
-  webSocket.on("message", (data) => {
-    const rawData = JSON.parse(data.toString());
-
-    const messageType = rawData.type;
-
-    switch (messageType) {
-      case "create-room":
-        // const roomId = createRoom(ClientConnectionId);
-        // webSocket.send(
-        //   JSON.stringify({
-        //     type: "room-created",
-        //     roomId,
-        //   }),
-        // );
-        break;
-      case "join-room":
-        joinRoom(ClientConnectionId, rawData.roomId);
-        webSocket.send(
-          JSON.stringify({
-            type: "room-joined",
-            roomId: rawData.roomId,
-          }),
-        );
-        break;
-      case "get-room":
-        // const room = getRoom(rawData.roomId);
-        // webSocket.send(
-        //   JSON.stringify({
-        //     type: "get-room",
-        //     room,
-        //   }),
-        // );
-        break;
-      case "leave-room":
-        leaveRoom(ClientConnectionId, rawData.roomId);
-        break;
-      case "message":
-        if (rawData.roomId) {
-          chatOnRoom(rawData.roomId, ClientConnectionId, rawData.message);
-        } else {
-          wsServer.clients.forEach((client) => {
-            client.send(
-              JSON.stringify({
-                type: "message",
-                message: rawData.message,
-                roomChat: false,
-                from: ClientConnectionId,
-              }),
-            );
-          });
-        }
-        break;
-      default:
-        console.log("Invalid case to handle");
+    if (!cookies) {
+      webSocket.close();
+      return;
     }
-  });
-  webSocket.on("close", () => {
-    console.log(`Client ${ClientConnectionId} is disconnected`);
-    // DisconnectTheClient(ClientConnectionId);
-    wsServer.clients.forEach((client) => {
-      client.send(`Client ${ClientConnectionId} is disconnected`);
+
+    const token = cookies
+      .split(";")
+      .find((cookie) => cookie.trim().startsWith("token="))
+      ?.split("=")[1];
+
+    if (!token) {
+      webSocket.close();
+      return;
+    }
+    let userId: string;
+    try {
+      const payload = verifyToken(token);
+      userId = payload.id;
+    } catch {
+      webSocket.close();
+      return;
+    }
+    const ClientConnectionId = ConnectTheClient(webSocket, userId);
+
+    webSocket.on("message", (data) => {
+      const rawData = JSON.parse(data.toString());
+      const messageType = rawData.type;
+
+      switch (messageType) {
+        case "JOIN_ROOM":
+          joinRoom(ClientConnectionId, rawData.roomId);
+          break;
+        case "GAME_ACTION":
+          gameAction(ClientConnectionId, rawData.roomId, rawData.action);
+          break;
+        case "START_GAME":
+          startGame(rawData.roomId)
+          break;
+        case "LEAVE_ROOM":
+          leaveRoom(ClientConnectionId, rawData.roomId);
+          break;
+        case "ROOM_CHAT":
+          if (rawData.roomId) chatOnRoom(rawData.roomId, ClientConnectionId, rawData.message);
+          else broadCastMessage(wsServer, rawData.message, ClientConnectionId);
+          break;
+        default:
+          console.log("Invalid case to handle");
+      }
+    });
+    webSocket.on("close", () => {
+      console.log(`Client ${ClientConnectionId} is disconnected`);
+      DisconnectTheClient(ClientConnectionId, webSocket);
+      wsServer.clients.forEach((client) => {
+        client.send(`Client ${ClientConnectionId} is disconnected`);
+      });
     });
   });
-});
+
+};

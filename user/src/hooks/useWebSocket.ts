@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const useWebSocket = () => {
   const socketRef = useRef<WebSocket | null>(null);
@@ -6,11 +6,12 @@ export const useWebSocket = () => {
   const [connectionId, setConnectionId] = useState("");
   const [roomId, setRoomId] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
+  const [isGameStarted,setIsGameStarted]=useState(false);
   const [roomMessages, setRoomMessages] = useState<any[]>([]);
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:3000");
+    const socket = new WebSocket("ws://localhost:4000");
 
     socketRef.current = socket;
 
@@ -28,8 +29,12 @@ export const useWebSocket = () => {
           break;
 
         case "room-created":
+          break;
         case "room-joined":
           setRoomId(data.roomId);
+          break;
+        case "room-game-started":
+          setIsGameStarted(true);
           break;
       }
 
@@ -52,13 +57,14 @@ export const useWebSocket = () => {
     };
   }, []);
 
-  const sendMessage = (data: object) => {
+  const sendMessage = useCallback((data: object) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify(data));
     }
-  };
+  }, []);
 
   return {
+    isGameStarted,
     connectionId,
     roomId,
     messages,

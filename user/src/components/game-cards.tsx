@@ -97,7 +97,7 @@ const GameCard = ({ room, isFull, currentPlayersCount, handleDirectJoin }: GameC
             <div className="mt-5 pt-3.5 border-t border-gray-100 flex items-center gap-2">
                 <Button
                     onClick={() => handleDirectJoin(room)}
-                    disabled={isFull && room.status !== "waiting"}
+                    disabled={isFull || room.status !== "waiting"}
                     className={`flex-1 h-9 rounded-xl font-bold text-xs shadow-xs cursor-pointer ${isFull
                         ? "bg-gray-100 text-gray-500 hover:bg-gray-200"
                         : "bg-[#FF6562] hover:bg-[#fa534f] text-white shadow-red-200"

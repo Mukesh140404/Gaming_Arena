@@ -14,5 +14,6 @@ export const onLeaveRoomLobby = async (
         destroyRoomApi(roomId)
     } else {
         leaveRoomApi(roomId)
+        
     }
 }

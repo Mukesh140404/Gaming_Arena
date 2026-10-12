@@ -15,6 +15,7 @@ import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as authAuthRouteImport } from './routes/(auth)/auth'
 import { Route as protectedIndexRouteImport } from './routes/(protected)/index'
 import { Route as protectedDashboardRouteImport } from './routes/(protected)/dashboard'
+import { Route as protectedDemoRouteImport } from './routes/(protected)/demo'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AdminGamesRouteImport } from './routes/admin/games'
 import { Route as protectedGameSlugRouteImport } from './routes/(protected)/game/$slug'
@@ -48,6 +49,11 @@ const protectedDashboardRoute = protectedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => protectedRouteRoute,
 } as any)
+const protectedDemoRoute = protectedDemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => protectedRouteRoute,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof authAuthRoute
   '/dashboard': typeof protectedDashboardRoute
+  '/demo': typeof protectedDemoRoute
   '/admin/games': typeof AdminGamesRoute
   '/': typeof protectedIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof authAuthRoute
   '/dashboard': typeof protectedDashboardRoute
+  '/demo': typeof protectedDemoRoute
   '/admin/games': typeof AdminGamesRoute
   '/': typeof protectedIndexRoute
   '/admin': typeof AdminIndexRoute
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteRouteWithChildren
   '/(auth)/auth': typeof authAuthRoute
   '/(protected)/dashboard': typeof protectedDashboardRoute
+  '/(protected)/demo': typeof protectedDemoRoute
   '/admin/games': typeof AdminGamesRoute
   '/(protected)/': typeof protectedIndexRoute
   '/admin/': typeof AdminIndexRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/dashboard'
+    | '/demo'
     | '/admin/games'
     | '/'
     | '/admin/'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/dashboard'
+    | '/demo'
     | '/admin/games'
     | '/'
     | '/admin'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/(auth)/auth'
     | '/(protected)/dashboard'
+    | '/(protected)/demo'
     | '/admin/games'
     | '/(protected)/'
     | '/admin/'
@@ -185,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof protectedDashboardRouteImport
       parentRoute: typeof protectedRouteRoute
     }
+    '/(protected)/demo': {
+      id: '/(protected)/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof protectedDemoRouteImport
+      parentRoute: typeof protectedRouteRoute
+    }
     '/admin/': {
       id: '/admin/'
       path: '/'
@@ -230,6 +249,7 @@ const authRouteRouteWithChildren = authRouteRoute._addFileChildren(
 
 interface protectedRouteRouteChildren {
   protectedDashboardRoute: typeof protectedDashboardRoute
+  protectedDemoRoute: typeof protectedDemoRoute
   protectedIndexRoute: typeof protectedIndexRoute
   protectedGameSlugRoute: typeof protectedGameSlugRoute
   protectedRoomIdRoute: typeof protectedRoomIdRoute
@@ -237,6 +257,7 @@ interface protectedRouteRouteChildren {
 
 const protectedRouteRouteChildren: protectedRouteRouteChildren = {
   protectedDashboardRoute: protectedDashboardRoute,
+  protectedDemoRoute: protectedDemoRoute,
   protectedIndexRoute: protectedIndexRoute,
   protectedGameSlugRoute: protectedGameSlugRoute,
   protectedRoomIdRoute: protectedRoomIdRoute,

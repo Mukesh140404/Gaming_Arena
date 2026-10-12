@@ -4,7 +4,7 @@ import { roomPlayers } from "../../db/schema/roomPlayers.js";
 import { and, eq, ne } from "drizzle-orm";
 import { users } from "../../db/schema/users.js";
 
-const connections = new Map();
+const connections = new Map<string, WebSocket>();
 
 export const ConnectTheClient = (
   socket: WebSocket,
@@ -14,102 +14,110 @@ export const ConnectTheClient = (
   return userId;
 };
 
-// export const DisconnectTheClient = (clientId:string) => {
-//   connections.delete(clientId);
-// };
+export const DisconnectTheClient = (userId: string, socket: WebSocket) => {
+  if (connections.get(userId) === socket) {
+    connections.delete(userId);
+  }
+};
 
-// export const createRoom = (host:string) => {
-//   const roomId = `Room${roomCount}`;
-//   roomCount = roomCount + 1;
-//   rooms.set(roomId, {
-//     host: host,
-//     users: new Array(host),
-//   });
-//   return roomId;
-// };
+export const sendTo = (userId: string, payload: object) => {
+  const socket = connections.get(userId);
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify(payload));
+  }
+};
 
-// export const getRoom = (roomId:string) => {
-//   const room = rooms.get(roomId);
-//   if (!room) return;
-//   return { ...room, userCount: room.users.length };
-// };
+export const sendToMany = (userIds: string[], payload: object) => {
+  userIds.forEach((id) => sendTo(id, payload));
+};
 
-export const joinRoom = async (userId: string, roomId: string) => {
-  const usersArray = await db
+export const getUser = async (userId: string) => {
+  const [user] = await db
+    .select({ id: users.id, name: users.name })
+    .from(users)
+    .where(eq(users.id, userId));
+  return user;
+};
+export const getActivePlayers = (roomId: string) =>
+  db
     .select()
     .from(roomPlayers)
-    .where(eq(roomPlayers.roomId, roomId))
+    .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.status, "active")));
 
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
+export const joinRoom = async (userId: string, roomId: string) => {
 
-  usersArray.forEach((u) => {
-    const socket = connections.get(u.userId);
-    socket.send(
-      JSON.stringify({
+  const players = await getActivePlayers(roomId);
+
+  const user = await getUser(userId);
+
+  players
+    .filter((p) => p.userId !== userId)
+    .forEach((p) => {
+      sendTo(p.userId, {
         type: "notify",
-        message: `${user.name} join the room`,
         roomChat: true,
-      }),
-    );
+        roomId,
+        message: `${user.name} joined the room`,
+      });
+    });
+};
+
+export const startGame = async (roomId: string) => {
+  const players = await getActivePlayers(roomId);
+  players.forEach((p) => {
+    sendTo(p.userId, {
+      type: "room-game-started",
+      roomChat: true,
+      roomId,
+    });
   });
-  return roomId;
 };
 
 export const leaveRoom = async (userId: string, roomId: string) => {
-  const usersArray = await db
+  const players = await db
     .select()
     .from(roomPlayers)
     .where(
       and(
         eq(roomPlayers.roomId, roomId),
         ne(roomPlayers.userId, userId),
-        eq(roomPlayers.status, "active")
-      )
-    )
-
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
-  usersArray.forEach((u) => {
-    const socket = connections.get(u.userId);
-    socket.send(
-      JSON.stringify({
-        type: "notify",
-        message: `${user.name} leave the room`,
-        roomChat: true,
-      }),
+        eq(roomPlayers.status, "active"),
+      ),
     );
+
+  const user = await getUser(userId);
+  if (!user) return;
+  players.forEach((p) => {
+    sendTo(p.userId, {
+      type: "notify",
+      roomChat: true,
+      roomId,
+      message: `${user.name} left the room`,
+    });
   });
 };
 
 export const chatOnRoom = async (roomId: string, userId: string, message: string) => {
-  // const room = rooms.get(roomId);
-  // if (!room) return;
-  // const roomUsers = room.users;
-  // if (!roomUsers.includes(user)) return;
-  const usersArray = await db
-    .select()
-    .from(roomPlayers)
-    .where(eq(roomPlayers.roomId, roomId))
+  const text = String(message ?? "").trim();
+  if (!text) return;
+  const players = await getActivePlayers(roomId);
 
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
+  // Only members of the room can chat in it
+  if (!players.some((p) => p.userId === userId)) return;
+  const user = await getUser(userId);
+  if (!user) return;
 
-  usersArray.forEach((u) => {
-    const socket = connections.get(u);
-    socket.send(
-      JSON.stringify({
-        type: "message",
-        message,
-        roomChat: true,
-        from: user,
-      }),
-    );
+  players.forEach((p) => {
+    sendTo(p.userId, {
+      type: "roomChat",
+      roomChat: true,
+      roomId,
+      userId: user.id,
+      name: user.name,
+      message: text,
+      time: Date.now(),
+    });
   });
 };
+
+
