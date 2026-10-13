@@ -1,9 +1,8 @@
-// src/games/registry.ts
 import type { GameEngine } from "./types.js";
-// import { bingo } from "";
+import { clickRace } from "./click-race.js";
 
 const engines: Record<string, GameEngine> = {
-//   [bingo.id]: bingo,
+    [clickRace.id]: clickRace,
 };
 
 export const getEngine = (gameId: string) => engines[gameId];   

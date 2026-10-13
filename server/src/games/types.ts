@@ -2,6 +2,8 @@
 export interface GameEngine<State = any, Action = any> {
   id: string;
   minPlayers: number;
+  maxPlayers: number;
+  name?: string;
 
   // Build the starting state from the list of player ids
   createInitialState: (playerIds: string[]) => State;
