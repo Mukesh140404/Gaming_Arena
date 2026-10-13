@@ -229,7 +229,7 @@ function SingleRoomLobbyRoute() {
   }
 
   if (isGameStarted && showGame) {
-    return <GameWrapper gameId={room.gameId} sendMessage={sendMessage} />
+    return <GameWrapper gameId={room.gameId} roomId={room.id} sendMessage={sendMessage} />
   }
 
   const isHost =

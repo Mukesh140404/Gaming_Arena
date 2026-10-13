@@ -1,12 +1,15 @@
 import { singleGameQueryOptions } from "@/hooks/useGame";
 import { useQuery } from "@tanstack/react-query";
 import Bingo from "./bingo/bingo";
+import ClickRace from "./click-race/click-race";
 
 interface GameWrapperProps {
   gameId: string;
+  sendMessage?: (data: object) => void;
+  roomId?: string;
 }
 
-const GameWrapper = ({ gameId }: GameWrapperProps) => {
+const GameWrapper = ({ gameId, roomId }: GameWrapperProps) => {
 
   const {data:game} = useQuery(singleGameQueryOptions(gameId));
 
@@ -16,6 +19,7 @@ const GameWrapper = ({ gameId }: GameWrapperProps) => {
   return (
     <div>
       {gameName === "bingo" && <Bingo />}
+      {(gameName === "click race" || gameName === "click-race") && <ClickRace roomId={roomId} />}
     </div>
   )
 }

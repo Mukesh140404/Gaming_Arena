@@ -1,76 +1,250 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-export const useWebSocket = () => {
-  const socketRef = useRef<WebSocket | null>(null);
+export interface RoomMessage {
+  type?: string;
+  message: string;
+  connectionId?: string;
+  userId?: string;
+  name?: string;
+  roomId?: string;
+  roomChat?: boolean;
+  time?: number;
+}
 
-  const [connectionId, setConnectionId] = useState("");
-  const [roomId, setRoomId] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [isGameStarted,setIsGameStarted]=useState(false);
-  const [roomMessages, setRoomMessages] = useState<any[]>([]);
-  const [connected, setConnected] = useState(false);
+// -------------------------------------------------------------
+// SINGLETON SHARED WEBSOCKET STATE (Shared across all components)
+// -------------------------------------------------------------
+let sharedSocket: WebSocket | null = null;
+let sharedConnectionId = "";
+let sharedRoomId = "";
+let sharedConnected = false;
+let sharedIsGameStarted = false;
+let sharedGameState: any = null;
+let sharedGameResult: any = null;
+let sharedGameError: string | null = null;
+let sharedRoomMessages: RoomMessage[] = [];
+let sharedMessages: any[] = [];
 
-  useEffect(() => {
-    const socket = new WebSocket("ws://localhost:4000");
+type Subscriber = () => void;
+const subscribers = new Set<Subscriber>();
 
-    socketRef.current = socket;
+function notifySubscribers() {
+  subscribers.forEach((sub) => sub());
+}
 
-    socket.onopen = () => {
-      console.log("WebSocket connected");
-      setConnected(true);
-    };
+function initSharedSocket() {
+  if (
+    sharedSocket &&
+    (sharedSocket.readyState === WebSocket.OPEN ||
+      sharedSocket.readyState === WebSocket.CONNECTING)
+  ) {
+    return;
+  }
 
-    socket.onmessage = (event) => {
+  const socket = new WebSocket("ws://localhost:4000");
+  sharedSocket = socket;
+
+  socket.onopen = () => {
+    sharedConnected = true;
+    console.log("WebSocket connected (singleton)");
+    notifySubscribers();
+  };
+
+  socket.onmessage = (event) => {
+    try {
       const data = JSON.parse(event.data);
 
       switch (data.type) {
         case "connection-id":
-          setConnectionId(data.connectionId);
+          sharedConnectionId = data.connectionId;
           break;
 
-        case "room-created":
-          break;
         case "room-joined":
-          setRoomId(data.roomId);
+          sharedRoomId = data.roomId;
           break;
+
         case "room-game-started":
-          setIsGameStarted(true);
+        case "game-started":
+          sharedIsGameStarted = true;
+          sharedGameResult = null;
+          sharedGameError = null;
+          break;
+
+        case "game-state":
+          sharedGameState = data.state;
+          break;
+
+        case "game-ended":
+          sharedGameResult = data.result;
+          sharedIsGameStarted = false;
+          break;
+
+        case "game-error":
+          sharedGameError = data.message;
+          break;
+
+        case "roomChat":
+        case "notify":
+          sharedRoomMessages = [...sharedRoomMessages, data];
+          break;
+
+        case "message":
+          if (data.roomChat === true) {
+            sharedRoomMessages = [...sharedRoomMessages, data];
+          } else {
+            sharedMessages = [...sharedMessages, data];
+          }
+          break;
+
+        default:
+          if (data.message) {
+            if (data.roomChat === true) {
+              sharedRoomMessages = [...sharedRoomMessages, data];
+            } else {
+              sharedMessages = [...sharedMessages, data];
+            }
+          }
           break;
       }
 
-      if (data.message) {
-        if (data.roomChat === true) {
-          setRoomMessages((prev) => [...prev, data]);
-        } else {
-          setMessages((prev) => [...prev, data]);
-        }
-      }
+      notifySubscribers();
+    } catch {
+      // Ignored non-json string message
+    }
+  };
+
+  socket.onclose = () => {
+    sharedConnected = false;
+    sharedSocket = null;
+    console.log("WebSocket disconnected (singleton)");
+    notifySubscribers();
+  };
+}
+
+export const useWebSocket = () => {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    initSharedSocket();
+
+    const handleUpdate = () => {
+      setTick((prev) => prev + 1);
     };
 
-    socket.onclose = () => {
-      setConnected(false);
-      console.log("WebSocket disconnected");
-    };
+    subscribers.add(handleUpdate);
 
     return () => {
-      socket.close();
+      subscribers.delete(handleUpdate);
     };
   }, []);
 
   const sendMessage = useCallback((data: object) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(data));
+    if (sharedSocket?.readyState === WebSocket.OPEN) {
+      sharedSocket.send(JSON.stringify(data));
+    } else {
+      console.warn("WebSocket is not open. Unable to send:", data);
     }
   }, []);
 
+  const joinRoom = useCallback(
+    (targetRoomId: string) => {
+      sharedRoomId = targetRoomId;
+      sendMessage({
+        type: "JOIN_ROOM",
+        roomId: targetRoomId,
+      });
+      notifySubscribers();
+    },
+    [sendMessage]
+  );
+
+  const leaveRoom = useCallback(
+    (targetRoomId: string) => {
+      sendMessage({
+        type: "LEAVE_ROOM",
+        roomId: targetRoomId,
+      });
+    },
+    [sendMessage]
+  );
+
+  const startGame = useCallback(
+    (targetRoomId: string) => {
+      sendMessage({
+        type: "START_GAME",
+        roomId: targetRoomId,
+      });
+    },
+    [sendMessage]
+  );
+
+  const sendGameAction = useCallback(
+    (targetRoomId: string, action: unknown) => {
+      sendMessage({
+        type: "GAME_ACTION",
+        roomId: targetRoomId,
+        action,
+      });
+    },
+    [sendMessage]
+  );
+
+  const sendRoomChat = useCallback(
+    (targetRoomId: string, message: string) => {
+      sendMessage({
+        type: "ROOM_CHAT",
+        roomId: targetRoomId,
+        message,
+      });
+    },
+    [sendMessage]
+  );
+
+  const sendBroadcastMessage = useCallback(
+    (message: string) => {
+      sendMessage({
+        type: "ROOM_CHAT",
+        message,
+      });
+    },
+    [sendMessage]
+  );
+
+  const setRoomId = useCallback((id: string) => {
+    sharedRoomId = id;
+    notifySubscribers();
+  }, []);
+
+  const setIsGameStarted = useCallback((val: boolean) => {
+    sharedIsGameStarted = val;
+    notifySubscribers();
+  }, []);
+
+  const setGameState = useCallback((state: any) => {
+    sharedGameState = state;
+    notifySubscribers();
+  }, []);
+
   return {
-    isGameStarted,
-    connectionId,
-    roomId,
-    messages,
-    roomMessages,
-    connected,
-    sendMessage,
+    connected: sharedConnected,
+    connectionId: sharedConnectionId,
+    roomId: sharedRoomId,
     setRoomId,
+    isGameStarted: sharedIsGameStarted,
+    setIsGameStarted,
+    gameState: sharedGameState,
+    setGameState,
+    gameResult: sharedGameResult,
+    gameError: sharedGameError,
+    roomMessages: sharedRoomMessages,
+    messages: sharedMessages,
+    sendMessage,
+    // Server linked functions
+    joinRoom,
+    leaveRoom,
+    startGame,
+    sendGameAction,
+    sendRoomChat,
+    sendBroadcastMessage,
   };
 };

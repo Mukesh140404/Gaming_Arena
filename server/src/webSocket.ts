@@ -7,7 +7,7 @@ import {
   startGame,
 } from "../src/controllers/websockets/room.js";
 import { broadCastMessage } from "./controllers/websockets/brodcast.js";
-import { gameAction } from "./controllers/websockets/game.js";
+import { gameAction, initGame } from "./controllers/websockets/game.js";
 import { verifyToken } from "./utils/jwt.js";
 import type { WebSocketServer } from "ws";
 
@@ -52,7 +52,8 @@ export const registerWebSocketHandlers = (wsServer: WebSocketServer) => {
           gameAction(ClientConnectionId, rawData.roomId, rawData.action);
           break;
         case "START_GAME":
-          startGame(rawData.roomId)
+          startGame(rawData.roomId);
+          initGame(rawData.roomId);
           break;
         case "LEAVE_ROOM":
           leaveRoom(ClientConnectionId, rawData.roomId);
