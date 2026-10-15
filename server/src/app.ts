@@ -13,8 +13,8 @@ const allowedOrigins = [
   env.CLIENT_URL,
   "http://localhost:5173",
   "http://localhost:5174",
+  "http://192.168.1.21:5173",
   "http://127.0.0.1:5173",
-  "http://127.0.0.1:5174",
 ].filter(Boolean);
 
 app.use(cors({
@@ -39,7 +39,7 @@ app.get("/", (req, res) => {
     );
 })
 
-app.get("/health", (req, res) => {
+app.get("/healthz", (req, res) => {
     res.status(200).json(
         new ApiResponse(200, { status: "ok" }, "Health check passed")
     );
