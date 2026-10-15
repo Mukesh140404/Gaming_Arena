@@ -5,8 +5,8 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 
-import { rooms } from "./rooms.js";
-import { users } from "./users.js";
+import { rooms } from "./rooms";
+import { users } from "./users";
 
 export const playerRole = pgEnum("player_role", [
   "host",

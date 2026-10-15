@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { createRoom, destroyRoom, getAllRoomsOfGame, getRoom, joinRoom, leaveRoom, updateRoom } from "../controllers/express/room.controller.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
+import { createRoom, destroyRoom, getAllRoomsOfGame, getRoom, joinRoom, leaveRoom, updateRoom } from "../controllers/express/room.controller";
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = Router()
 

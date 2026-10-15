@@ -1,8 +1,8 @@
 import WebSocket from "ws"
-import { db } from "../../db/index.js";
-import { roomPlayers } from "../../db/schema/roomPlayers.js";
+import { db } from "../../db/index";
+import { roomPlayers } from "../../db/schema/roomPlayers";
 import { and, eq, ne } from "drizzle-orm";
-import { users } from "../../db/schema/users.js";
+import { users } from "../../db/schema/users";
 
 const connections = new Map<string, WebSocket>();
 

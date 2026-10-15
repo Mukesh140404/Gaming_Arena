@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { ApiError } from "../lib/ApiError.js";
+import { ApiError } from "../lib/ApiError";
 import { ZodError } from "zod";
 
 export function errorMiddleware(

@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
-import { db } from "../../db/index.js";
-import { rooms } from "../../db/schema/rooms.js";
-import { games } from "../../db/schema/games.js";
-import { getEngine } from "../../games/registry.js";
-import { getActivePlayers, sendTo, sendToMany } from "./room.js";
+import { db } from "../../db/index";
+import { rooms } from "../../db/schema/rooms";
+import { games } from "../../db/schema/games";
+import { getEngine } from "../../games/registry";
+import { getActivePlayers, sendTo, sendToMany } from "./room";
 
 export const activeGames = new Map<string, any>();
 

@@ -5,10 +5,10 @@ import {
   leaveRoom,
   chatOnRoom,
   startGame,
-} from "../src/controllers/websockets/room.js";
-import { broadCastMessage } from "./controllers/websockets/brodcast.js";
-import { gameAction, initGame } from "./controllers/websockets/game.js";
-import { verifyToken } from "./utils/jwt.js";
+} from "./controllers/websockets/room";
+import { broadCastMessage } from "./controllers/websockets/brodcast";
+import { gameAction, initGame } from "./controllers/websockets/game";
+import { verifyToken } from "./utils/jwt";
 import type { WebSocketServer } from "ws";
 
 export const registerWebSocketHandlers = (wsServer: WebSocketServer) => {

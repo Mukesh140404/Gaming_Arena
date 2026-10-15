@@ -1,7 +1,7 @@
 import { Router } from "express";
-import authRouter from "./auth.routes.js";
-import gameRouter from "./game.routes.js";
-import room from "./room.routes.js"
+import authRouter from "./auth.routes";
+import gameRouter from "./game.routes";
+import room from "./room.routes"
 
 const router = Router();
 

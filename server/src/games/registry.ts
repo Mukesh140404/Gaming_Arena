@@ -1,5 +1,5 @@
-import type { GameEngine } from "./types.js";
-import { clickRace } from "./click-race.js";
+import type { GameEngine } from "./types";
+import { clickRace } from "./click-race";
 
 const engines: Record<string, GameEngine> = {
     [clickRace.id]: clickRace,

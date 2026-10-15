@@ -1,4 +1,4 @@
-import type { GameEngine } from "./types.js";
+import type { GameEngine } from "./types";
 
 type State = { scores: Record<string, number> }
 type Action = { type: "click" }

@@ -7,8 +7,8 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 
-import { games } from "./games.js";
-import { users } from "./users.js";
+import { games } from "./games";
+import { users } from "./users";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import z from "zod";
 

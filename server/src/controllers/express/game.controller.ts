@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../../lib/asyncHandler.js";
-import { gameAddSchema, games, gameUpdateSchema } from "../../db/schema/games.js";
-import { ApiError } from "../../lib/ApiError.js";
-import { db } from "../../db/index.js";
+import { asyncHandler } from "../../lib/asyncHandler";
+import { gameAddSchema, games, gameUpdateSchema } from "../../db/schema/games";
+import { ApiError } from "../../lib/ApiError";
+import { db } from "../../db/index";
 import { eq } from "drizzle-orm";
-import { slugify } from "../../utils/slug.js";
-import { ApiResponse } from "../../lib/ApiResponse.js";
+import { slugify } from "../../utils/slug";
+import { ApiResponse } from "../../lib/ApiResponse";
 
 const addGame = asyncHandler(async (req: Request, res: Response) => {
     const parseBody = gameAddSchema.parse(req.body)

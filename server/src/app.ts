@@ -1,11 +1,11 @@
 import express from "express";
-import { ApiResponse } from "./lib/ApiResponse.js";
-import routes from "./routes/index.js"
-import { errorMiddleware } from "./middlewares/error.middleware.js";
+import { ApiResponse } from "./lib/ApiResponse";
+import routes from "./routes/index"
+import { errorMiddleware } from "./middlewares/error.middleware";
 import cors from "cors";
 import cookieParser from "cookie-parser"
 import helmet from "helmet";
-import { env } from "./config/env.js";
+import { env } from "./config/env";
 
 const app = express();
 app.use(helmet());

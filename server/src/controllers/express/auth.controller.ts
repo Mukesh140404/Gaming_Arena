@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../../lib/asyncHandler.js";
-import { userLoginSchema, users, userSignUpSchema } from "../../db/schema/users.js";
-import { ApiError } from "../../lib/ApiError.js";
-import { db } from "../../db/index.js";
+import { asyncHandler } from "../../lib/asyncHandler";
+import { userLoginSchema, users, userSignUpSchema } from "../../db/schema/users";
+import { ApiError } from "../../lib/ApiError";
+import { db } from "../../db/index";
 import { eq } from "drizzle-orm";
-import { comparePassword, hashPassword } from "../../utils/password.js";
-import { signToken } from "../../utils/jwt.js";
-import { clearAuthCookie, setAuthCookie } from "../../utils/cookie.js";
-import { ApiResponse } from "../../lib/ApiResponse.js";
+import { comparePassword, hashPassword } from "../../utils/password";
+import { signToken } from "../../utils/jwt";
+import { clearAuthCookie, setAuthCookie } from "../../utils/cookie";
+import { ApiResponse } from "../../lib/ApiResponse";
 
 const signUp = asyncHandler(async (req: Request, res: Response) => {
   const parsedBody = userSignUpSchema.parse(req.body);

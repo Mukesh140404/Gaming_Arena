@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../../lib/asyncHandler.js";
-import { createRoomSchema, rooms, updateRoomSchema } from "../../db/schema/rooms.js";
-import { games } from "../../db/schema/games.js";
-import { users } from "../../db/schema/users.js";
-import { roomPlayers } from "../../db/schema/roomPlayers.js";
-import { db } from "../../db/index.js";
+import { asyncHandler } from "../../lib/asyncHandler";
+import { createRoomSchema, rooms, updateRoomSchema } from "../../db/schema/rooms";
+import { games } from "../../db/schema/games";
+import { users } from "../../db/schema/users";
+import { roomPlayers } from "../../db/schema/roomPlayers";
+import { db } from "../../db/index";
 import { and, count, eq } from "drizzle-orm";
-import { ApiError } from "../../lib/ApiError.js";
-import { ApiResponse } from "../../lib/ApiResponse.js";
-import { comparePassword, hashPassword } from "../../utils/password.js";
+import { ApiError } from "../../lib/ApiError";
+import { ApiResponse } from "../../lib/ApiResponse";
+import { comparePassword, hashPassword } from "../../utils/password";
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 

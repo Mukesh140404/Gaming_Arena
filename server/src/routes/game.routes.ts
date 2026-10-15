@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { addGame, allGames, deleteGame, getGameById, updateGame } from "../controllers/express/game.controller.js";
-import { authMiddleware } from "../middlewares/auth.middleware.js";
-import { authorizeRoles } from "../middlewares/role.middleware.js";
+import { addGame, allGames, deleteGame, getGameById, updateGame } from "../controllers/express/game.controller";
+import { authMiddleware } from "../middlewares/auth.middleware";
+import { authorizeRoles } from "../middlewares/role.middleware";
 
 const router = Router();
 

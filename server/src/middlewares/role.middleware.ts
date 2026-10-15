@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
-import { ApiError } from "../lib/ApiError.js";
-import type { UserRole } from "../types/user.type.js";
+import { ApiError } from "../lib/ApiError";
+import type { UserRole } from "../types/user.type";
 
 export function authorizeRoles(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction) => {

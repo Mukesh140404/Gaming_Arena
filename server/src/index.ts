@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import { WebSocketServer } from "ws";
-import app from "./app.js";
-import { registerWebSocketHandlers } from "./webSocket.js";
+import app from "./app";
+import { registerWebSocketHandlers } from "./webSocket";
 
 const PORT = process.env.PORT ?? 4000;
 
