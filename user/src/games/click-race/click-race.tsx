@@ -39,8 +39,8 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
 
   const clickTimestampsRef = useRef<number[]>([]);
   const lastClickTimeRef = useRef<number>(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
+  // const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const targetClicks = DEFAULT_TARGET_CLICKS;
 
   // -----------------------------------------------------------
@@ -58,7 +58,7 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
     );
     const winnerName = isMe
       ? "You"
-      : winnerPlayer?.user?.name || winnerPlayer?.name || "Opponent";
+      : winnerPlayer?.userId || winnerPlayer?.name || "Opponent";
 
     return { name: winnerName, isSelf: isMe };
   }, [gameResult, authUser, room]);
