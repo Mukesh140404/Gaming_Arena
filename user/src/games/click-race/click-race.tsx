@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { DEFAULT_TARGET_CLICKS, RACER_ICONS, sfx, type Racer } from "./config";
 import RaceHeader from "./race-header";
 import RaceTrack from "./race-track";
@@ -54,7 +60,7 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
 
     // Find winner's display name from room players
     const winnerPlayer = room?.roomPlayersList?.find(
-      (p: any) => p.userId === gameResult.winnerId
+      (p: any) => p.userId === gameResult.winnerId,
     );
     const winnerName = isMe
       ? "You"
@@ -79,7 +85,9 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
         setElapsedTime(now - startTime);
 
         // Calculate CPS in rolling 1.5s window
-        const recent = clickTimestampsRef.current.filter((t) => now - t <= 1500);
+        const recent = clickTimestampsRef.current.filter(
+          (t) => now - t <= 1500,
+        );
         const calculated = recent.length > 0 ? recent.length / 1.5 : 0;
         setCurrentCps(calculated);
         setPeakCps((prev) => Math.max(prev, calculated));
@@ -105,7 +113,9 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
     }
 
     clickTimestampsRef.current.push(now);
-    clickTimestampsRef.current = clickTimestampsRef.current.filter((t) => now - t <= 2000);
+    clickTimestampsRef.current = clickTimestampsRef.current.filter(
+      (t) => now - t <= 2000,
+    );
 
     // Combo calculation
     if (now - lastClickTimeRef.current < 400) {
@@ -158,7 +168,7 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
   const racers: Racer[] = useMemo(() => {
     const scores = (gameState?.scores || {}) as Record<string, number>;
     const activeRoomPlayers = (room?.roomPlayersList || []).filter(
-      (p: any) => p.status === "active"
+      (p: any) => p.status === "active",
     );
 
     // If we have active room players, build racers list from room players
