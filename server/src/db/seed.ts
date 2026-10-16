@@ -4,7 +4,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 // Adjust this import path and table name to match your project
-import { users } from "./schema";
+import { users } from "./schema/users";
 
 async function seed() {
   const databaseUrl = process.env.DATABASE_URL;
