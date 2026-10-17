@@ -1,12 +1,7 @@
-import { useNavigate } from "@tanstack/react-router";
-import { 
-  Gamepad2, 
-  LogOut, 
-  ShieldCheck, 
-  Menu
-} from "lucide-react";
+import { Gamepad2, LogOut, ShieldCheck, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLogout } from "@/hooks/useAuth";
 
 interface AdminNavbarProps {
   onToggleSidebar?: () => void;
@@ -18,17 +13,15 @@ interface AdminNavbarProps {
 }
 
 export function AdminNavbar({ onToggleSidebar, adminUser }: AdminNavbarProps) {
-  const navigate = useNavigate();
+  const logoutMutation = useLogout();
 
   const handleLogout = () => {
-    // Navigate to auth
-    navigate({ to: "/auth" });
+    logoutMutation.mutate();
   };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 w-full border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-black/95">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        
         {/* Left Section: Mobile menu toggle + Breadcrumb / Logo */}
         <div className="flex items-center gap-3 sm:gap-4">
           <Button
@@ -50,7 +43,10 @@ export function AdminNavbar({ onToggleSidebar, adminUser }: AdminNavbarProps) {
                 <span className="font-semibold text-sm tracking-tight text-zinc-950 dark:text-zinc-50">
                   Gaming Arena
                 </span>
-                <Badge variant="mono" className="text-[10px] font-mono px-1.5 py-0 h-4 uppercase tracking-wider">
+                <Badge
+                  variant="mono"
+                  className="text-[10px] font-mono px-1.5 py-0 h-4 uppercase tracking-wider"
+                >
                   Admin
                 </Badge>
               </div>
@@ -60,7 +56,6 @@ export function AdminNavbar({ onToggleSidebar, adminUser }: AdminNavbarProps) {
             </div>
           </div>
         </div>
-
 
         {/* Right Section: Actions & User Info */}
         <div className="flex items-center gap-2 sm:gap-3">
@@ -91,9 +86,7 @@ export function AdminNavbar({ onToggleSidebar, adminUser }: AdminNavbarProps) {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
-
         </div>
-
       </div>
     </header>
   );

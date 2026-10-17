@@ -68,6 +68,7 @@ function initSharedSocket() {
         case "room-game-started":
         case "game-started":
           sharedIsGameStarted = true;
+          sharedGameState = data.state ?? null;
           sharedGameResult = null;
           sharedGameError = null;
           break;
@@ -78,7 +79,7 @@ function initSharedSocket() {
 
         case "game-ended":
           sharedGameResult = data.result;
-          sharedIsGameStarted = false;
+          // sharedIsGameStarted = false;
           break;
 
         case "game-error":
@@ -157,7 +158,7 @@ export const useWebSocket = () => {
       });
       notifySubscribers();
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const leaveRoom = useCallback(
@@ -167,7 +168,7 @@ export const useWebSocket = () => {
         roomId: targetRoomId,
       });
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const startGame = useCallback(
@@ -177,7 +178,7 @@ export const useWebSocket = () => {
         roomId: targetRoomId,
       });
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const sendGameAction = useCallback(
@@ -188,7 +189,7 @@ export const useWebSocket = () => {
         action,
       });
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const sendRoomChat = useCallback(
@@ -199,7 +200,7 @@ export const useWebSocket = () => {
         message,
       });
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const sendBroadcastMessage = useCallback(
@@ -209,7 +210,7 @@ export const useWebSocket = () => {
         message,
       });
     },
-    [sendMessage]
+    [sendMessage],
   );
 
   const setRoomId = useCallback((id: string) => {
@@ -227,6 +228,11 @@ export const useWebSocket = () => {
     notifySubscribers();
   }, []);
 
+  const setGameResult = useCallback((result: any) => {
+    sharedGameResult = result;
+    notifySubscribers();
+  }, []);
+
   return {
     connected: sharedConnected,
     connectionId: sharedConnectionId,
@@ -234,6 +240,7 @@ export const useWebSocket = () => {
     setRoomId,
     isGameStarted: sharedIsGameStarted,
     setIsGameStarted,
+    setGameResult,
     gameState: sharedGameState,
     setGameState,
     gameResult: sharedGameResult,
