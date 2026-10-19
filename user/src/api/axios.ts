@@ -9,3 +9,12 @@ export const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Save the WebSocket token from any response that contains it
+api.interceptors.response.use((response) => {
+  const wsToken = response.data?.data?.wsToken;
+  if (wsToken) {
+    sessionStorage.setItem("wsToken", wsToken);
+  }
+  return response;
+});
