@@ -4,6 +4,7 @@ import { GameBoard } from "./game-board";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import type { BoardCell } from "./types";
+import ResultGameDialog from "@/components/dialogs/result-game.model";
 
 interface TicTacToeProps {
   roomId?: string;
@@ -81,7 +82,12 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
         onCellClick={handleCellClick}
       />
 
-      {gameResult && (
+      <ResultGameDialog
+        gameResult={gameResult}
+        userId={authUser?.id}
+        onBackToRoom={handleBackToRoom}
+      />
+      {/* {gameResult && (
         <div className="flex flex-col items-center gap-3">
           <p className="text-2xl font-black">
             {gameResult.draw
@@ -97,7 +103,7 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
             Back to Room
           </button>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

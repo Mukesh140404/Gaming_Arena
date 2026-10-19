@@ -20,7 +20,12 @@ import {
   Gamepad2,
   UserCheck,
 } from "lucide-react";
-import { singleRoomQueryOptions, useLeaveRoomMutation, useDestroyRoomMutation, useUpdateRoomMutation } from "@/hooks/useRoom";
+import {
+  singleRoomQueryOptions,
+  useLeaveRoomMutation,
+  useDestroyRoomMutation,
+  useUpdateRoomMutation,
+} from "@/hooks/useRoom";
 import { currentUserQueryOptions, useCurrentUser } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +43,7 @@ export const Route = createFileRoute("/(protected)/room/$id")({
     const user = await context.queryClient.ensureQueryData(
       currentUserQueryOptions,
     );
-    console.log("user", user)
+    console.log("user", user);
     await onLeaveRoomLobby(roomId, user.id);
   },
 });
@@ -63,16 +68,17 @@ function SingleRoomLobbyRoute() {
   const [isReady, setIsReady] = useState(false);
   const [showGame, setShowGame] = useState(false);
 
-  const { connected, sendMessage, roomMessages, isGameStarted } = useWebSocket();
+  const { connected, sendMessage, roomMessages, isGameStarted } =
+    useWebSocket();
   const currentRoomMessages = roomMessages.filter((m) => m.roomId === id);
 
   useEffect(() => {
     if (room?.status === "finished") {
       navigate({
-        to: "/dashboard"
-      })
+        to: "/dashboard",
+      });
     }
-  }, [room])
+  }, [room]);
 
   useEffect(() => {
     if (id && connected) {
@@ -94,7 +100,6 @@ function SingleRoomLobbyRoute() {
 
     return () => clearTimeout(timer);
   }, [isGameStarted]);
-
 
   const handleCopyCode = () => {
     if (!room?.roomCode) return;
@@ -133,12 +138,10 @@ function SingleRoomLobbyRoute() {
       sendMessage({
         type: "START_GAME",
         roomId: id,
-        gameId: room?.gameId
-      })
-    }
-    catch { }
-  }
-
+        gameId: room?.gameId,
+      });
+    } catch {}
+  };
 
   const handleSendRoomMessage = (message: string) => {
     if (!message) return;
@@ -149,7 +152,6 @@ function SingleRoomLobbyRoute() {
       connectionId: currentUser?.id,
     });
   };
-
 
   // 1. Loading State
   if (isLoading) {
@@ -165,8 +167,12 @@ function SingleRoomLobbyRoute() {
           </span>
         </div>
         <div>
-          <h2 className="text-lg font-bold text-gray-800">Entering Room Lobby...</h2>
-          <p className="text-xs text-gray-500 mt-1">Connecting to live match session</p>
+          <h2 className="text-lg font-bold text-gray-800">
+            Entering Room Lobby...
+          </h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Connecting to live match session
+          </p>
         </div>
       </div>
     );
@@ -181,7 +187,8 @@ function SingleRoomLobbyRoute() {
         </div>
         <h2 className="text-xl font-black text-gray-900">Room Not Found</h2>
         <p className="text-xs text-gray-500 mt-2 mb-6">
-          This room may have been disbanded, finished, or the room ID is invalid.
+          This room may have been disbanded, finished, or the room ID is
+          invalid.
         </p>
         <Link to="/dashboard">
           <Button className="rounded-xl bg-[#FF6562] hover:bg-[#fa534f] text-white font-bold text-xs">
@@ -195,8 +202,6 @@ function SingleRoomLobbyRoute() {
 
   if (isGameStarted && !showGame) {
     return (
-
-
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <motion.div
@@ -225,11 +230,16 @@ function SingleRoomLobbyRoute() {
         </div>
       </div>
     );
-
   }
 
   if (isGameStarted && showGame) {
-    return <GameWrapper gameId={room.gameId} roomId={room.id} sendMessage={sendMessage} />
+    return (
+      <GameWrapper
+        gameId={room.gameId}
+        roomId={room.id}
+        sendMessage={sendMessage}
+      />
+    );
   }
 
   const isHost =
@@ -239,12 +249,10 @@ function SingleRoomLobbyRoute() {
   const activePlayers = players.filter((p) => p.status === "active");
   const emptySlotsCount = Math.max(0, room.maxPlayers - activePlayers.length);
 
-
   return (
     <div className="space-y-6 pb-12">
       {/* Top Navigation */}
       <div className="flex items-center justify-end gap-3">
-
         {/* 5-second Polling Live Badge */}
         <div className="flex items-center gap-2 ">
           <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
@@ -310,9 +318,17 @@ function SingleRoomLobbyRoute() {
 
             <p className="text-xs sm:text-sm font-medium text-gray-500 flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-gray-400" />
-              <span>Created {new Date(room.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span>
+                Created{" "}
+                {new Date(room.createdAt).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
               <span>•</span>
-              <span>{activePlayers.length} of {room.maxPlayers} players joined</span>
+              <span>
+                {activePlayers.length} of {room.maxPlayers} players joined
+              </span>
             </p>
           </div>
 
@@ -362,7 +378,9 @@ function SingleRoomLobbyRoute() {
             </div>
 
             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/80">
-              {emptySlotsCount > 0 ? `${emptySlotsCount} Slots Open` : "Lobby Full"}
+              {emptySlotsCount > 0
+                ? `${emptySlotsCount} Slots Open`
+                : "Lobby Full"}
             </span>
           </div>
 
@@ -373,24 +391,26 @@ function SingleRoomLobbyRoute() {
               const isCurrent = player.userId === currentUser?.id;
               const playerName =
                 player.name ||
-                (isCurrent ? (currentUser?.name || "You") : "Challenger");
+                (isCurrent ? currentUser?.name || "You" : "Challenger");
 
               return (
                 <Card
                   key={player.id}
-                  className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 ${isCurrent
-                    ? "border-[#FF6562]/50 bg-linear-to-br from-white to-[#FCECE9]/40 shadow-xs"
-                    : "border-gray-200/80 bg-white"
-                    }`}
+                  className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 ${
+                    isCurrent
+                      ? "border-[#FF6562]/50 bg-linear-to-br from-white to-[#FCECE9]/40 shadow-xs"
+                      : "border-gray-200/80 bg-white"
+                  }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
                       <div
-                        className={`relative flex h-12 w-12 items-center justify-center rounded-2xl font-black text-sm shadow-xs ${isPlayerHost
-                          ? "bg-linear-to-tr from-amber-400 to-amber-500 text-white"
-                          : "bg-linear-to-tr from-[#FF6562] to-[#FFA194] text-white"
-                          }`}
+                        className={`relative flex h-12 w-12 items-center justify-center rounded-2xl font-black text-sm shadow-xs ${
+                          isPlayerHost
+                            ? "bg-linear-to-tr from-amber-400 to-amber-500 text-white"
+                            : "bg-linear-to-tr from-[#FF6562] to-[#FFA194] text-white"
+                        }`}
                       >
                         {playerName.charAt(0).toUpperCase()}
 
@@ -458,7 +478,7 @@ function SingleRoomLobbyRoute() {
         </div>
 
         {/* Right Col: Host / Player Control Panel */}
-        <div className="space-y-4 lg:col-span-2 flex gap-3">
+        <div className="space-y-4 lg:col-span-2 flex flex-col md:flex-row gap-3">
           <RoomMessageBox
             messages={currentRoomMessages}
             handleSendRoomMessage={handleSendRoomMessage}
@@ -471,7 +491,9 @@ function SingleRoomLobbyRoute() {
                 Session Status
               </span>
               <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-100">
-                <span className="text-xs font-bold text-gray-700">Multiplayer Lobby</span>
+                <span className="text-xs font-bold text-gray-700">
+                  Multiplayer Lobby
+                </span>
                 <span className="text-xs font-black text-emerald-600 capitalize">
                   {room.status}
                 </span>
@@ -484,12 +506,15 @@ function SingleRoomLobbyRoute() {
                 variant={isReady ? "default" : "outline"}
                 onClick={() => {
                   setIsReady(!isReady);
-                  toast.success(isReady ? "Marked as Not Ready" : "You are READY!");
+                  toast.success(
+                    isReady ? "Marked as Not Ready" : "You are READY!",
+                  );
                 }}
-                className={`w-full h-11 rounded-xl text-xs font-black cursor-pointer transition ${isReady
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
+                className={`w-full h-11 rounded-xl text-xs font-black cursor-pointer transition ${
+                  isReady
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
               >
                 <UserCheck className="h-4 w-4 mr-1.5" />
                 {isReady ? "Ready for Battle!" : "Click to Ready Up"}

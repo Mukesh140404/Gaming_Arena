@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Mail, Eye, EyeOff, User } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLogin, useSignup } from "@/hooks/useAuth";
+import LoginImage from "@/assets/login.webp";
 
 export const Route = createFileRoute("/(auth)/auth")({
   component: RouteComponent,
@@ -13,8 +14,8 @@ function RouteComponent() {
   const loginMutation = useLogin();
   const signupMutation = useSignup();
 
-  const [loginEmail, setLoginEmail] = useState("daniel21fisher@gmail.com");
-  const [loginPassword, setLoginPassword] = useState("password123");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   const [signupUsername, setSignupUsername] = useState("");
@@ -22,16 +23,22 @@ function RouteComponent() {
   const [signupPassword, setSignupPassword] = useState("");
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
   const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [showSignupConfirmPassword, setShowSignupConfirmPassword] = useState(false);
+  const [showSignupConfirmPassword, setShowSignupConfirmPassword] =
+    useState(false);
 
-  const LoginHandler =(e: React.FormEvent)=>{
+  const LoginHandler = (e: React.FormEvent) => {
     e.preventDefault();
-    loginMutation.mutate({ email:loginEmail,passwordHash:loginPassword });
-  }
-  const SignUpHandler =(e: React.FormEvent)=>{
+    loginMutation.mutate({ email: loginEmail, passwordHash: loginPassword });
+  };
+  const SignUpHandler = (e: React.FormEvent) => {
     e.preventDefault();
-    signupMutation.mutate({ email:signupEmail,passwordHash:signupPassword,name:signupUsername,role:"user"});
-  }
+    signupMutation.mutate({
+      email: signupEmail,
+      passwordHash: signupPassword,
+      name: signupUsername,
+      role: "user",
+    });
+  };
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-[#FDF0EE] p-4 sm:p-6 overflow-hidden">
@@ -39,17 +46,15 @@ function RouteComponent() {
       <div className="pointer-events-none absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-[#FFE5DF]/60 blur-3xl" />
 
       <div className="relative flex flex-col md:flex-row w-full max-w-235 md:min-h-145 rounded-[2.5rem] bg-white/85 md:bg-white backdrop-blur-xl md:backdrop-blur-none border border-white/70 md:border-transparent shadow-[0_25px_60px_-15px_rgba(232,93,86,0.12),0_12px_30px_-10px_rgba(0,0,0,0.06)] overflow-hidden p-3 md:p-5 transition-all duration-300">
-        
         <div className="absolute inset-0 md:hidden flex pointer-events-none overflow-hidden items-end justify-start z-0">
           <img
-            src="/assets/login.png"
+            src={LoginImage}
             alt="Mascot Background"
             className="h-[85%] max-h-105 w-auto object-contain opacity-25 filter contrast-105"
           />
         </div>
 
         <div className="relative hidden md:flex w-1/2 min-h-135 flex-col justify-between rounded-[2rem] bg-[#FCECE9] p-7 overflow-hidden">
-
           <div className="z-10 relative">
             <span className="text-xl font-black tracking-tight text-[#E85D56]">
               GA<span className="text-[#1F2438]">MING-ARENA</span>
@@ -58,7 +63,7 @@ function RouteComponent() {
 
           <div className="absolute bottom-0 -left-3 w-[122%] max-w-107.5 pointer-events-none select-none">
             <img
-              src="/assets/login.png"
+              src={LoginImage}
               alt="Gaming Arena Mascot"
               className="w-full h-auto object-contain object-end select-none"
             />
@@ -67,7 +72,6 @@ function RouteComponent() {
 
         <div className="relative z-10 flex w-full md:w-1/2 flex-col justify-center px-4 py-6 sm:px-10 md:py-8">
           <div className="mx-auto w-full max-w-sm">
-            
             <div className="mb-4 flex justify-center md:hidden">
               <span className="text-xl font-black tracking-tight text-[#E85D56]">
                 GA<span className="text-[#1F2438]">MING-ARENA</span>
@@ -89,7 +93,6 @@ function RouteComponent() {
                   </h1>
 
                   <form onSubmit={LoginHandler} className="space-y-4">
-                    
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-700">
                         Email
@@ -115,7 +118,9 @@ function RouteComponent() {
                       <div className="relative flex items-center">
                         <button
                           type="button"
-                          onClick={() => setShowLoginPassword(!showLoginPassword)}
+                          onClick={() =>
+                            setShowLoginPassword(!showLoginPassword)
+                          }
                           className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
                         >
                           {showLoginPassword ? (
@@ -218,7 +223,9 @@ function RouteComponent() {
                       <div className="relative flex items-center">
                         <button
                           type="button"
-                          onClick={() => setShowSignupPassword(!showSignupPassword)}
+                          onClick={() =>
+                            setShowSignupPassword(!showSignupPassword)
+                          }
                           className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
                         >
                           {showSignupPassword ? (
@@ -244,7 +251,11 @@ function RouteComponent() {
                       <div className="relative flex items-center">
                         <button
                           type="button"
-                          onClick={() => setShowSignupConfirmPassword(!showSignupConfirmPassword)}
+                          onClick={() =>
+                            setShowSignupConfirmPassword(
+                              !showSignupConfirmPassword,
+                            )
+                          }
                           className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer"
                         >
                           {showSignupConfirmPassword ? (
@@ -256,7 +267,9 @@ function RouteComponent() {
                         <input
                           type={showSignupConfirmPassword ? "text" : "password"}
                           value={signupConfirmPassword}
-                          onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                          onChange={(e) =>
+                            setSignupConfirmPassword(e.target.value)
+                          }
                           placeholder="Confirm password"
                           className="w-full rounded-xl border border-gray-200 bg-white/95 py-2 pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 shadow-xs focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition"
                         />

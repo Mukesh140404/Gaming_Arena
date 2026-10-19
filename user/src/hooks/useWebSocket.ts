@@ -12,9 +12,6 @@ export interface RoomMessage {
   time?: number;
 }
 
-// -------------------------------------------------------------
-// SINGLETON SHARED WEBSOCKET STATE (Shared across all components)
-// -------------------------------------------------------------
 let sharedSocket: WebSocket | null = null;
 let sharedConnectionId = "";
 let sharedRoomId = "";
@@ -53,7 +50,7 @@ function initSharedSocket() {
 
   socket.onopen = () => {
     sharedConnected = true;
-    console.log("WebSocket connected (singleton)");
+    console.log("WebSocket connected...");
     notifySubscribers();
   };
 
