@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useCurrentUser } from "@/hooks/useAuth";
 
 export interface RoomMessage {
   type?: string;
@@ -38,9 +39,13 @@ function initSharedSocket() {
     return;
   }
 
+  // Do not connect until the token is available
+  const token = sessionStorage.getItem("wsToken");
+  if (!token) return;
+
   const WS_URL = import.meta.env.VITE_WS_URL ?? "ws://localhost:4000";
 
-  const socket = new WebSocket(WS_URL);
+  const socket = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
   sharedSocket = socket;
 
   socket.onopen = () => {
@@ -121,12 +126,28 @@ function initSharedSocket() {
   };
 }
 
+// Call this on logout so the next login opens a fresh socket with the new token
+export function closeSharedSocket() {
+  sharedSocket?.close();
+  sharedSocket = null;
+  sharedConnected = false;
+  sharedConnectionId = "";
+  sharedRoomId = "";
+  sharedIsGameStarted = false;
+  sharedGameState = null;
+  sharedGameResult = null;
+  sharedGameError = null;
+  sharedRoomMessages = [];
+  sharedMessages = [];
+  notifySubscribers();
+}
+
 export const useWebSocket = () => {
   const [, setTick] = useState(0);
+  const { data: currentUser } = useCurrentUser();
 
+  // Subscribe to shared state updates
   useEffect(() => {
-    initSharedSocket();
-
     const handleUpdate = () => {
       setTick((prev) => prev + 1);
     };
@@ -137,6 +158,12 @@ export const useWebSocket = () => {
       subscribers.delete(handleUpdate);
     };
   }, []);
+
+  // Connect only after the current user (and wsToken) is available
+  useEffect(() => {
+    if (!currentUser) return;
+    initSharedSocket();
+  }, [currentUser?.id]);
 
   const sendMessage = useCallback((data: object) => {
     if (sharedSocket?.readyState === WebSocket.OPEN) {

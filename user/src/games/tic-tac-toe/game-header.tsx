@@ -3,10 +3,7 @@ import {
   Zap,
   Volume2,
   VolumeX,
-  RotateCcw,
-  Timer,
-  Gauge,
-  Trophy,
+  RotateCcw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +27,10 @@ export const GameHeader: React.FC<RaceHeaderProps> = ({
   onRestart,
   isMultiplayer,
 }) => {
+  
   // Format elapsed time in ss.mm
   const seconds = (elapsedTime / 1000).toFixed(1);
-
+console.log(cps,targetClicks, seconds);
   return (
     <div className=" bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3 w-full">
       {/* Top Banner */}

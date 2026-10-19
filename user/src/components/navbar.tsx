@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLogout } from "@/hooks/useAuth";
+import { closeSharedSocket } from "@/hooks/useWebSocket";
 
 interface NavbarProps {
   projectName?: string;
@@ -92,7 +93,12 @@ export default function Navbar({
                 </div>
                 <div className="border-t border-gray-100 pt-1">
                   <button
-                    onClick={() => logoutMutation.mutate()}
+                    onClick={() => logoutMutation.mutate(undefined, {
+      onSettled: () => {
+        // Close the old socket so the next login opens a new one with the new token
+        closeSharedSocket();
+      },
+    })}
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-[#E85D56] hover:bg-red-50 transition cursor-pointer"
                   >
                     Log out
