@@ -4,10 +4,27 @@ import { rooms } from "../../db/schema/rooms";
 import { games } from "../../db/schema/games";
 import { getEngine } from "../../games/registry";
 import { getActivePlayers, sendTo, sendToMany } from "./room";
+import { GameEngine } from "../../games/types";
 
 export const activeGames = new Map<string, any>();
 
+const sendStateToPlayers = (
+  engine: GameEngine,
+  playerIds: string[],
+  roomId: string,
+  state: any,
+) => {
+  playerIds.forEach((playerId) => {
+    const view = engine.getPlayerView
+      ? engine.getPlayerView(state, playerId)
+      : state;
+    sendTo(playerId, { type: "game-state", roomId, state: view });
+  });
+};
+
 export const initGame = async (roomId: string) => {
+  const existing = activeGames.get(roomId);
+  if (existing) return existing;
   const players = await getActivePlayers(roomId);
   const playerIds = players.map((p) => p.userId);
   const [room] = await db.select().from(rooms).where(eq(rooms.id, roomId));
@@ -28,13 +45,26 @@ export const gameAction = async (
   roomId: string,
   action: unknown,
 ) => {
+  // let state = activeGames.get(roomId);
+  // if (!state) {
+  //   state = await initGame(roomId);
+  //   if (!state) {
+  //     sendTo(userId, {
+  //       type: "game-error",
+  //       roomId,
+  //       message: "No game is running",
+  //     });
+  //     return;
+  //   }
+  // }
   let state = activeGames.get(roomId);
   if (!state) {
-    state = await initGame(roomId);
-    if (!state) {
-      sendTo(userId, { type: "game-error", roomId, message: "No game is running" });
-      return;
-    }
+    sendTo(userId, {
+      type: "game-error",
+      roomId,
+      message: "No game is running",
+    });
+    return;
   }
 
   const players = await getActivePlayers(roomId);
@@ -62,11 +92,18 @@ export const gameAction = async (
 
   activeGames.set(roomId, newState);
 
-  sendToMany(playerIds, { type: "game-state", roomId, state: newState });
+  sendStateToPlayers(engine, playerIds, roomId, newState);
+
+  // sendToMany(playerIds, { type: "game-state", roomId, state: newState });
 
   const result = engine.getResult(newState);
   if (result) {
     activeGames.delete(roomId);
-    sendToMany(playerIds, { type: "game-ended", roomId, result });
+    sendToMany(playerIds, {
+      type: "game-ended",
+      roomId,
+      result,
+      finalState: newState,
+    });
   }
 };

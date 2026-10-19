@@ -5,6 +5,7 @@ import { useCurrentUser } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import type { BoardCell } from "./types";
 import ResultGameDialog from "@/components/dialogs/result-game.model";
+import { useUpdateRoomMutation } from "@/hooks/useRoom";
 
 interface TicTacToeProps {
   roomId?: string;
@@ -23,6 +24,7 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
   } = useWebSocket();
   const effectiveRoomId = propRoomId || wsRoomId;
   const { data: authUser } = useCurrentUser();
+  const updateRoomMutation = useUpdateRoomMutation(effectiveRoomId);
 
   const cells = useMemo<BoardCell[]>(() => {
     const board: (string | null)[] = gameState?.board ?? Array(9).fill(null);
@@ -42,7 +44,17 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
     sendGameAction(effectiveRoomId, { type: "MOVE", index: cellIndex });
   };
 
+  const handleGameStatusChange = async () => {
+    try {
+      await updateRoomMutation.mutateAsync({
+        roomId: effectiveRoomId,
+        status: "waiting",
+      });
+    } catch {}
+  };
+
   const handleBackToRoom = () => {
+    handleGameStatusChange();
     setGameResult(null);
     setGameState(null);
     setIsGameStarted(false); // room page shows the lobby again
@@ -65,9 +77,6 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
       )}
 
       <GameHeader
-        elapsedTime={0}
-        cps={0}
-        targetClicks={0}
         soundEnabled={true}
         onToggleSound={() => {}}
         onRestart={() => {}}
@@ -87,23 +96,6 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
         userId={authUser?.id}
         onBackToRoom={handleBackToRoom}
       />
-      {/* {gameResult && (
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-2xl font-black">
-            {gameResult.draw
-              ? "It's a draw!"
-              : gameResult.winnerId === authUser?.id
-                ? "You won!"
-                : "You lost!"}
-          </p>
-          <button
-            onClick={handleBackToRoom}
-            className="rounded-xl bg-[#FF6562] px-5 py-2 text-sm font-bold text-white"
-          >
-            Back to Room
-          </button>
-        </div>
-      )} */}
     </div>
   );
 };

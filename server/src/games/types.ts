@@ -14,5 +14,11 @@ export interface GameEngine<State = any, Action = any> {
 
   // Return null while the game is running.
   // Return a result object when the game is over.
-  getResult: (state: State) => { winnerId: string | null; draw?: boolean } | null;
+  getResult: (
+    state: State,
+  ) => { winnerId: string | null; draw?: boolean } | null;
+
+  // Optional: what a specific player is allowed to see.
+  // If not defined, everyone gets the full state.
+  getPlayerView?: (state: State, playerId: string) => any;
 }

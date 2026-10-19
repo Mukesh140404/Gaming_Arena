@@ -18,7 +18,7 @@ const GameWrapper = ({ gameId, roomId }: GameWrapperProps) => {
   const gameName = game.name.toLowerCase();
   return (
     <div>
-      {gameName === "bingo" && <Bingo />}
+      {gameName === "bingo" && <Bingo roomId={roomId} />}
       {(gameName === "click race" || gameName === "click-race") && (
         <ClickRace roomId={roomId} />
       )}

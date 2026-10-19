@@ -7,6 +7,7 @@ interface BingoBoardProps {
   winningCells: Set<number>;
   onCellClick: (index: number) => void;
   onCellDoubleClick: (index: number) => void;
+  isEnabled?: boolean;
 }
 
 export const BingoBoard: React.FC<BingoBoardProps> = ({
@@ -16,6 +17,7 @@ export const BingoBoard: React.FC<BingoBoardProps> = ({
   winningCells,
   onCellClick,
   onCellDoubleClick,
+  isEnabled = true,
 }) => {
   return (
     <div className="w-full max-w-xl aspect-square">
@@ -64,7 +66,7 @@ export const BingoBoard: React.FC<BingoBoardProps> = ({
               key={index}
               type="button"
               onClick={() => onCellClick(index)}
-              disabled={isMarked || phase === "won"}
+              disabled={isMarked || phase === "won" || !isEnabled}
               className={`aspect-square rounded-xl text-2xl sm:text-4xl font-bold flex items-center justify-center transition-all duration-200 select-none border relative ${
                 isMarked
                   ? "bg-rose-300 text-rose-950 border-rose-400 shadow-xs cursor-default scale-[0.98]"
