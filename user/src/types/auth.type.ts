@@ -6,9 +6,16 @@ export const userLoginInputSchema = userSchema.pick({
     passwordHash: true
 })
 
-export const userLoginOutputSchema = userSchema.omit({
-    passwordHash: true
-})
+// export const userLoginOutputSchema = userSchema.omit({
+//     passwordHash: true
+// })
+export const userLoginOutputSchema = userSchema
+  .omit({
+    passwordHash: true,
+  })
+  .extend({
+    wsToken: z.string().optional(),
+  });
 
 export const userRegisterInputSchema = userSchema.omit({
     id: true,
