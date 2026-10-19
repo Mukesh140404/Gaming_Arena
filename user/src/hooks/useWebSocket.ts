@@ -22,6 +22,7 @@ let sharedGameResult: any = null;
 let sharedGameError: string | null = null;
 let sharedRoomMessages: RoomMessage[] = [];
 let sharedMessages: any[] = [];
+let sharedFinalState: any = null;
 
 type Subscriber = () => void;
 const subscribers = new Set<Subscriber>();
@@ -72,6 +73,7 @@ function initSharedSocket() {
           sharedIsGameStarted = true;
           sharedGameState = data.state ?? null;
           sharedGameResult = null;
+          sharedFinalState = null;
           sharedGameError = null;
           break;
 
@@ -81,6 +83,7 @@ function initSharedSocket() {
 
         case "game-ended":
           sharedGameResult = data.result;
+          sharedFinalState = data.finalState ?? null;
           // sharedIsGameStarted = false;
           break;
 
@@ -136,6 +139,7 @@ export function closeSharedSocket() {
   sharedIsGameStarted = false;
   sharedGameState = null;
   sharedGameResult = null;
+  sharedFinalState = null;
   sharedGameError = null;
   sharedRoomMessages = [];
   sharedMessages = [];
@@ -257,6 +261,11 @@ export const useWebSocket = () => {
     notifySubscribers();
   }, []);
 
+  const setFinalState = useCallback((state: any) => {
+    sharedFinalState = state;
+    notifySubscribers();
+  }, []);
+
   return {
     connected: sharedConnected,
     connectionId: sharedConnectionId,
@@ -272,6 +281,8 @@ export const useWebSocket = () => {
     roomMessages: sharedRoomMessages,
     messages: sharedMessages,
     sendMessage,
+    finalState: sharedFinalState,
+    setFinalState: setFinalState,
     // Server linked functions
     joinRoom,
     leaveRoom,

@@ -9,9 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface RaceHeaderProps {
-  elapsedTime: number;
-  cps: number;
-  targetClicks: number;
   soundEnabled: boolean;
   onToggleSound: () => void;
   onRestart: () => void;
@@ -19,18 +16,12 @@ interface RaceHeaderProps {
 }
 
 export const GameHeader: React.FC<RaceHeaderProps> = ({
-  elapsedTime,
-  cps,
-  targetClicks = 0,
   soundEnabled = true,
   onToggleSound,
   onRestart,
   isMultiplayer,
 }) => {
-  
-  // Format elapsed time in ss.mm
-  const seconds = (elapsedTime / 1000).toFixed(1);
-console.log(cps,targetClicks, seconds);
+
   return (
     <div className=" bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3 w-full">
       {/* Top Banner */}
