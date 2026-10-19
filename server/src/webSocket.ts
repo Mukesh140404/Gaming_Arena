@@ -14,17 +14,26 @@ import type { WebSocketServer } from "ws";
 export const registerWebSocketHandlers = (wsServer: WebSocketServer) => {
 
   wsServer.on("connection", (webSocket, request) => {
-    const cookies = request.headers.cookie;
+    // const cookies = request.headers.cookie;
 
-    if (!cookies) {
-      webSocket.close();
-      return;
-    }
+    // if (!cookies) {
+    //   webSocket.close();
+    //   return;
+    // }
 
-    const token = cookies
-      .split(";")
-      .find((cookie) => cookie.trim().startsWith("token="))
-      ?.split("=")[1];
+    // const token = cookies
+    //   .split(";")
+    //   .find((cookie) => cookie.trim().startsWith("token="))
+    //   ?.split("=")[1];
+    const url = new URL(request.url ?? "", "http://localhost");
+const cookieToken = request.headers.cookie
+  ?.split(";")
+  .find((cookie) => cookie.trim().startsWith("token="))
+  ?.split("=")[1];
+
+// Prefer the token from the URL, fall back to the cookie
+const token = url.searchParams.get("token") || cookieToken;
+
 
     if (!token) {
       webSocket.close();
@@ -41,7 +50,13 @@ export const registerWebSocketHandlers = (wsServer: WebSocketServer) => {
     const ClientConnectionId = ConnectTheClient(webSocket, userId);
 
     webSocket.on("message", (data) => {
-      const rawData = JSON.parse(data.toString());
+      // const rawData = JSON.parse(data.toString());
+      let rawData: any;
+  try {
+    rawData = JSON.parse(data.toString());
+  } catch {
+    return; // Ignore invalid JSON
+  }
       const messageType = rawData.type;
 
       switch (messageType) {
@@ -69,9 +84,9 @@ export const registerWebSocketHandlers = (wsServer: WebSocketServer) => {
     webSocket.on("close", () => {
       console.log(`Client ${ClientConnectionId} is disconnected`);
       DisconnectTheClient(ClientConnectionId, webSocket);
-      wsServer.clients.forEach((client) => {
-        client.send(`Client ${ClientConnectionId} is disconnected`);
-      });
+      // wsServer.clients.forEach((client) => {
+      //   client.send(`Client ${ClientConnectionId} is disconnected`);
+      // });
     });
   });
 
