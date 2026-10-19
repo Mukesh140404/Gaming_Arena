@@ -14,6 +14,7 @@ import { motion } from "motion/react";
 import { gamesQueryOptions } from "@/hooks/useGame";
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useAuth";
+import LoginImage from "@/assets/login.webp";
 
 export const Route = createFileRoute("/(protected)/dashboard")({
   component: RouteComponent,
@@ -31,7 +32,7 @@ function RouteComponent() {
     return GAMES_DATA.filter(
       (g) =>
         g.name.toLowerCase().includes(q) ||
-        (g.description && g.description.toLowerCase().includes(q))
+        (g.description && g.description.toLowerCase().includes(q)),
     );
   }, [GAMES_DATA, searchQuery]);
 
@@ -63,7 +64,7 @@ function RouteComponent() {
               <div className="absolute -inset-1 rounded-3xl bg-linear-to-tr from-[#FF6562] via-[#FFA194] to-amber-300 opacity-70 blur-md group-hover:opacity-100 transition duration-300" />
               <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-3xl bg-[#FCECE9] border-2 border-white shadow-md overflow-hidden flex items-center justify-center">
                 <img
-                  src="/assets/login.png"
+                  src={LoginImage}
                   alt="Player Avatar"
                   className="h-full w-full object-cover object-top scale-110"
                 />
@@ -87,7 +88,8 @@ function RouteComponent() {
               </div>
 
               <p className="text-xs sm:text-sm font-medium text-gray-500">
-                Gamer Tag: <span className="font-bold text-gray-700">@{gamerTag}</span>
+                Gamer Tag:{" "}
+                <span className="font-bold text-gray-700">@{gamerTag}</span>
                 {user?.email && (
                   <span className="text-gray-400"> • {user.email}</span>
                 )}
@@ -280,7 +282,9 @@ function RouteComponent() {
           <div className="py-12 text-center text-gray-400">
             <Gamepad2 className="mx-auto h-12 w-12 text-gray-300 mb-3" />
             <p className="text-sm font-bold text-gray-600">
-              {searchQuery ? "No matching games found." : "No games available in the arena."}
+              {searchQuery
+                ? "No matching games found."
+                : "No games available in the arena."}
             </p>
             <p className="text-xs text-gray-400 mt-1">
               {searchQuery
