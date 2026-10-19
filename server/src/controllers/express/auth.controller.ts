@@ -43,7 +43,7 @@ const signUp = asyncHandler(async (req: Request, res: Response) => {
   const { passwordHash: _password, ...safeUser } = createdUser;
   return res
     .status(201)
-    .json(new ApiResponse(201, safeUser, "User created successfully"));
+    .json(new ApiResponse(201, { ...safeUser, wsToken: token }, "User created successfully"));
 
 })
 
@@ -77,7 +77,7 @@ const login = asyncHandler(async (req: Request, res: Response) => {
   const { passwordHash: _password, ...safeUser } = user;
   return res
     .status(200)
-    .json(new ApiResponse(200, safeUser, "User logged in successfully"));
+    .json(new ApiResponse(200, { ...safeUser, wsToken: token }, "User logged in successfully"));
 });
 
 const logout = asyncHandler(async (req: Request, res: Response) => {
@@ -96,10 +96,16 @@ const getMe = asyncHandler(async (req: Request, res: Response) => {
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+  const wsToken = signToken({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+  });
   const { passwordHash: _password, ...safeUser } = user;
   return res
     .status(200)
-    .json(new ApiResponse(200, safeUser, "User retrieved successfully"));
+    .json(new ApiResponse(200,{ ...safeUser, wsToken }, "User retrieved successfully"));
 });
 
 export { login, signUp, logout, getMe };
