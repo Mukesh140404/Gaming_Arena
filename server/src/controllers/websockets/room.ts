@@ -14,6 +14,35 @@ export const ConnectTheClient = (
   return userId;
 };
 
+// Called once when a socket closes. No timers, no polling.
+// Called once when a socket closes. No timers, no polling.
+export const handleUserDisconnect = async (userId: string, socket: WebSocket) => {
+  // If a newer socket replaced this one (refresh / second tab), the user has not left
+  if (connections.get(userId) !== socket) return;
+
+  connections.delete(userId);
+
+  // Mark the user as left in every room where they are still active
+  const activeRows = await db
+    .select()
+    .from(roomPlayers)
+    .where(and(eq(roomPlayers.userId, userId), eq(roomPlayers.status, "active")));
+
+  for (const row of activeRows) {
+    await db
+      .update(roomPlayers)
+      .set({ status: "left" }) // use the value your schema uses for "left"
+      .where(eq(roomPlayers.id, row.id));
+
+    // Tell the remaining players (chat message + refetch trigger)
+    await leaveRoom(userId, row.roomId);
+    const others = await getActivePlayers(row.roomId);
+    others.forEach((p) =>
+      sendTo(p.userId, { type: "room-updated", roomId: row.roomId }),
+    );
+  }
+};
+
 export const DisconnectTheClient = (userId: string, socket: WebSocket) => {
   if (connections.get(userId) === socket) {
     connections.delete(userId);

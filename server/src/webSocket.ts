@@ -1,6 +1,7 @@
 import {
   ConnectTheClient,
-  DisconnectTheClient,
+  // DisconnectTheClient,
+  handleUserDisconnect,
   joinRoom,
   leaveRoom,
   chatOnRoom,
@@ -83,10 +84,10 @@ const token = url.searchParams.get("token") || cookieToken;
     });
     webSocket.on("close", () => {
       console.log(`Client ${ClientConnectionId} is disconnected`);
-      DisconnectTheClient(ClientConnectionId, webSocket);
-      // wsServer.clients.forEach((client) => {
-      //   client.send(`Client ${ClientConnectionId} is disconnected`);
-      // });
+      handleUserDisconnect(ClientConnectionId, webSocket);
+      wsServer.clients.forEach((client) => {
+        client.send(`Client ${ClientConnectionId} is disconnected`);
+      });
     });
   });
 
