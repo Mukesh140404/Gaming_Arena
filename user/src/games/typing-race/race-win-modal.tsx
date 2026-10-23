@@ -8,7 +8,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { TypingRacer } from "./config";
+import { CAR_CONFIGS, type TypingRacer } from "./config";
 import { toast } from "sonner";
 
 interface RaceWinModalProps {
@@ -179,7 +179,18 @@ export const RaceWinModal: React.FC<RaceWinModalProps> = ({
                   {index + 1}
                 </span>
 
-                <span className="text-base">{racer.avatar}</span>
+                <div className="h-4 w-9 shrink-0 flex items-center justify-center">
+                  <img
+                    src={racer.carImage || CAR_CONFIGS[index % CAR_CONFIGS.length].image}
+                    alt={racer.name}
+                    className="h-full w-full object-contain select-none"
+                    style={{
+                      transform: (racer.rotateCar ?? CAR_CONFIGS[index % CAR_CONFIGS.length].rotate180)
+                        ? "rotateY(180deg)"
+                        : undefined,
+                    }}
+                  />
+                </div>
 
                 <span className="truncate max-w-[120px] sm:max-w-none">
                   {racer.name} {racer.isSelf && "(You)"}

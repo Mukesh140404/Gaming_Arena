@@ -1,3 +1,21 @@
+import car1Img from "@/assets/typing-race/car1.webp";
+import car2Img from "@/assets/typing-race/car2.webp";
+import car3Img from "@/assets/typing-race/car3.webp";
+import car4Img from "@/assets/typing-race/car4.webp";
+
+export interface CarConfig {
+  id: number;
+  image: string;
+  rotate180: boolean;
+}
+
+export const CAR_CONFIGS: CarConfig[] = [
+  { id: 1, image: car1Img, rotate180: false },
+  { id: 2, image: car2Img, rotate180: false },
+  { id: 3, image: car3Img, rotate180: true }, // rotated 180deg to face forward
+  { id: 4, image: car4Img, rotate180: false },
+];
+
 export interface TypingRacer {
   id: string;
   name: string;
@@ -7,6 +25,8 @@ export interface TypingRacer {
   color: string;
   accentHex: string;
   avatar: string;
+  carImage?: string;
+  rotateCar?: boolean;
   isSelf: boolean;
   completed?: boolean;
   bg?: string;
@@ -124,6 +144,8 @@ export const DEFAULT_AI_BOTS: Omit<TypingRacer, "score" | "wpm" | "accuracy" | "
     border: "border-cyan-400",
     accentHex: "#06b6d4",
     avatar: "🚀",
+    carImage: car2Img,
+    rotateCar: false,
     isBot: true,
     botTargetWpm: 68,
   } as any,
@@ -135,6 +157,8 @@ export const DEFAULT_AI_BOTS: Omit<TypingRacer, "score" | "wpm" | "accuracy" | "
     border: "border-purple-400",
     accentHex: "#8b5cf6",
     avatar: "⚡",
+    carImage: car3Img,
+    rotateCar: true,
     isBot: true,
     botTargetWpm: 54,
   } as any,
@@ -146,6 +170,8 @@ export const DEFAULT_AI_BOTS: Omit<TypingRacer, "score" | "wpm" | "accuracy" | "
     border: "border-amber-400",
     accentHex: "#f59e0b",
     avatar: "🏍️",
+    carImage: car4Img,
+    rotateCar: false,
     isBot: true,
     botTargetWpm: 78,
   } as any,

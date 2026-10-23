@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import { Flame, Crown } from "lucide-react";
-import type { TypingRacer } from "./config";
+import { CAR_CONFIGS, type TypingRacer } from "./config";
 
 interface RaceTrackProps {
   racers: TypingRacer[];
@@ -71,17 +71,20 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ racers, userStreak = 0 }) 
         </div>
 
         {/* All Racers Driving on the Single Track */}
-        <div className="relative h-full w-[calc(100%-48px)] ml-3">
+        <div className="relative h-full w-[calc(100%-110px)] ml-4">
           {racers.slice(0, 4).map((racer, index) => {
             const clampedScore = Math.min(100, Math.max(0, racer.score));
             const isLeader = leaderId === racer.id && racer.score > 0;
             const isNitroActive = racer.isSelf && userStreak >= 20;
             const topPosition = laneTops[index % laneTops.length];
+            const carConfig = CAR_CONFIGS[index % CAR_CONFIGS.length];
+            const carImage = racer.carImage || carConfig.image;
+            const shouldRotate = racer.rotateCar ?? carConfig.rotate180;
 
             return (
               <motion.div
                 key={racer.id || index}
-                className="absolute flex items-center z-10"
+                className="absolute flex items-center z-10 -translate-y-1/2"
                 style={{ top: `${topPosition}%` }}
                 animate={{
                   left: `${clampedScore}%`,
@@ -91,13 +94,11 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ racers, userStreak = 0 }) 
                   stiffness: 140,
                   damping: 18,
                 }}
-                // Transform keeps vehicle centered at its percentage
-                style-transform="translate(-50%, -50%)"
               >
                 {/* Flame Exhaust Trail if moving */}
                 {clampedScore > 0 && clampedScore < 100 && (
                   <span
-                    className={`mr-1 text-xs select-none ${
+                    className={`mr-0.5 text-xs select-none ${
                       isNitroActive ? "text-rose-500 scale-125 animate-bounce" : "text-amber-400"
                     }`}
                   >
@@ -105,46 +106,39 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ racers, userStreak = 0 }) 
                   </span>
                 )}
 
-                {/* Racer Vehicle & Telemetry Capsule */}
-                <div
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded-xl border text-xs shadow-md transition-all select-none backdrop-blur-md ${
-                    racer.isSelf
-                      ? "bg-linear-to-r from-rose-500 to-red-600 border-rose-300 text-white shadow-rose-500/40 ring-2 ring-rose-400/40 scale-105"
-                      : "bg-slate-800/90 border-slate-700 text-slate-200 shadow-black/50"
-                  }`}
-                >
-                  {/* Car Avatar */}
-                  <span className="text-base select-none">{racer.avatar}</span>
-
-                  {/* Name & Tags */}
-                  <div className="flex items-center gap-1">
-                    <span className="font-black text-[11px] truncate max-w-[80px] sm:max-w-[110px]">
-                      {racer.name}
-                    </span>
-
+                {/* Car Container */}
+                <div className="relative flex flex-col items-center">
+                  {/* Subtle Floating Info: YOU badge / 1ST Crown / Live WPM */}
+                  <div className="absolute -top-3.5 flex items-center gap-1 pointer-events-none whitespace-nowrap z-20">
                     {racer.isSelf && (
-                      <span className="text-[9px] font-black bg-white/20 border border-white/40 px-1 rounded uppercase">
+                      <span className="text-[8px] font-black bg-rose-600 text-white px-1.5 py-0.2 rounded-full uppercase tracking-wider shadow-sm ring-1 ring-white/30">
                         YOU
                       </span>
                     )}
-
                     {isLeader && (
-                      <span className="text-[9px] font-black bg-amber-400 text-black px-1 rounded flex items-center gap-0.5">
-                        <Crown className="h-2.5 w-2.5 fill-black" />
+                      <span className="text-[8px] font-black bg-amber-400 text-black px-1 py-0.2 rounded flex items-center gap-0.5 shadow-sm">
+                        <Crown className="h-2 w-2 fill-black" />
                         1ST
                       </span>
                     )}
-                  </div>
-
-                  {/* Live WPM & Progress Tag */}
-                  <div className="flex items-center gap-1 pl-1 border-l border-white/20 font-mono text-[10px]">
-                    <span className="font-bold text-white/90">
+                    <span className="text-[8px] font-mono font-bold text-white/90 bg-slate-900/80 px-1 py-0.2 rounded border border-white/10 backdrop-blur-xs">
                       {Math.round(racer.wpm)}W
                     </span>
-                    <span className="font-black text-amber-300">
-                      {Math.round(clampedScore)}%
-                    </span>
                   </div>
+
+                  {/* Car Image with 180deg rotation for car3 */}
+                  <img
+                    src={carImage}
+                    alt={racer.name}
+                    className={`h-9 sm:h-11 w-auto max-w-[100px] sm:max-w-[125px] object-contain select-none pointer-events-none transition-transform duration-100 ${
+                      racer.isSelf
+                        ? "drop-shadow-[0_4px_12px_rgba(244,63,94,0.7)]"
+                        : "drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
+                    }`}
+                    style={{
+                      transform: shouldRotate ? "rotateY(180deg)" : undefined,
+                    }}
+                  />
                 </div>
               </motion.div>
             );
@@ -156,6 +150,10 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ racers, userStreak = 0 }) 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
         {racers.slice(0, 4).map((racer, index) => {
           const isLeader = leaderId === racer.id && racer.score > 0;
+          const carConfig = CAR_CONFIGS[index % CAR_CONFIGS.length];
+          const carImage = racer.carImage || carConfig.image;
+          const shouldRotate = racer.rotateCar ?? carConfig.rotate180;
+
           return (
             <div
               key={racer.id || index}
@@ -165,8 +163,17 @@ export const RaceTrack: React.FC<RaceTrackProps> = ({ racers, userStreak = 0 }) 
                   : "bg-slate-800/40 border-slate-800 text-slate-400"
               }`}
             >
-              <div className="flex items-center gap-1.5 truncate">
-                <span className="text-sm">{racer.avatar}</span>
+              <div className="flex items-center gap-2 truncate">
+                <div className="h-4 w-9 shrink-0 flex items-center justify-center">
+                  <img
+                    src={carImage}
+                    alt={racer.name}
+                    className="h-full w-full object-contain select-none"
+                    style={{
+                      transform: shouldRotate ? "rotateY(180deg)" : undefined,
+                    }}
+                  />
+                </div>
                 <span className="font-bold truncate text-[11px] text-white">
                   {racer.name}
                 </span>

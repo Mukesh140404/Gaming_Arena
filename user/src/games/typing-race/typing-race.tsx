@@ -14,6 +14,7 @@ import {
   RACER_PALETTES,
   RACER_AVATARS,
   DEFAULT_AI_BOTS,
+  CAR_CONFIGS,
   typingSfx,
   type TypingRacer,
   type QuoteData,
@@ -86,17 +87,22 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
 
   // Initialize 3 bots for demo / solo practice (so total racers = 4)
   const initBotRacers = useCallback(() => {
-    const bots: TypingRacer[] = DEFAULT_AI_BOTS.slice(0, 3).map((bot, idx) => ({
-      ...bot,
-      score: 0,
-      wpm: 0,
-      accuracy: 96 + Math.round(Math.random() * 3),
-      isSelf: false,
-      color: bot.color,
-      accentHex: bot.accentHex,
-      avatar: bot.avatar,
-      rank: idx + 2,
-    }));
+    const bots: TypingRacer[] = DEFAULT_AI_BOTS.slice(0, 3).map((bot, idx) => {
+      const carConfig = CAR_CONFIGS[(idx + 1) % CAR_CONFIGS.length];
+      return {
+        ...bot,
+        score: 0,
+        wpm: 0,
+        accuracy: 96 + Math.round(Math.random() * 3),
+        isSelf: false,
+        color: bot.color,
+        accentHex: bot.accentHex,
+        avatar: bot.avatar,
+        carImage: bot.carImage || carConfig.image,
+        rotateCar: bot.rotateCar ?? carConfig.rotate180,
+        rank: idx + 2,
+      };
+    });
     setBotRacers(bots);
   }, []);
 
@@ -244,6 +250,7 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
     const myId = authUser?.id || "you";
     const myName = authUser?.name ? `${authUser.name} (You)` : "You";
 
+    const userCar = CAR_CONFIGS[0];
     const userRacer: TypingRacer = {
       id: myId,
       name: myName,
@@ -253,6 +260,8 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
       color: "from-rose-500 to-red-600",
       accentHex: "#FF6562",
       avatar: "🏎️",
+      carImage: userCar.image,
+      rotateCar: userCar.rotate180,
       isSelf: true,
       completed: myProgress >= 100,
       finishTime: myProgress >= 100 ? elapsedTime : undefined,
@@ -270,8 +279,13 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
           const pState = playerStates[player.userId] || {};
           const palette = RACER_PALETTES[idx % RACER_PALETTES.length];
           const avatar = RACER_AVATARS[idx % RACER_AVATARS.length];
+          const car = CAR_CONFIGS[idx % CAR_CONFIGS.length];
 
-          if (isSelf) return userRacer;
+          if (isSelf) return {
+            ...userRacer,
+            carImage: car.image,
+            rotateCar: car.rotate180,
+          };
 
           return {
             id: player.userId,
@@ -282,6 +296,8 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
             color: palette.color,
             accentHex: palette.accentHex,
             avatar,
+            carImage: car.image,
+            rotateCar: car.rotate180,
             isSelf: false,
             completed: pState.completed ?? false,
             finishTime: pState.finishTime,
