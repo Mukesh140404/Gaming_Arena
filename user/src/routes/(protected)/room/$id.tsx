@@ -35,6 +35,7 @@ import { onLeaveRoomLobby } from "@/lib/utils";
 import { RoomMessageBox } from "@/components/room/room-message-box";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import GameWrapper from "@/games/game-wrapper";
+import { singleGameQueryOptions } from "@/hooks/useGame";
 
 export const Route = createFileRoute("/(protected)/room/$id")({
   component: SingleRoomLobbyRoute,
@@ -60,6 +61,12 @@ function SingleRoomLobbyRoute() {
     refetch,
     isRefetching,
   } = useQuery(singleRoomQueryOptions(id));
+  const gameId = room?.gameId;
+
+  const { data:game } = useQuery({
+    ...singleGameQueryOptions(gameId!),
+    enabled: !!gameId,
+  });
 
   const leaveRoomMutation = useLeaveRoomMutation(room?.gameId);
   const destroyRoomMutation = useDestroyRoomMutation(room?.gameId);
@@ -140,7 +147,7 @@ function SingleRoomLobbyRoute() {
         roomId: id,
         gameId: room?.gameId,
       });
-    } catch {}
+    } catch { }
   };
 
   const handleSendRoomMessage = (message: string) => {
@@ -248,6 +255,10 @@ function SingleRoomLobbyRoute() {
   const players = room.roomPlayersList || [];
   const activePlayers = players.filter((p) => p.status === "active");
   const emptySlotsCount = Math.max(0, room.maxPlayers - activePlayers.length);
+ const isCanStart =
+  !!game &&
+  !!room &&
+  (game.minPlayers ?? 0) <= (room.roomPlayersList?.length ?? 0);
 
   return (
     <div className="space-y-6 pb-12">
@@ -396,21 +407,19 @@ function SingleRoomLobbyRoute() {
               return (
                 <Card
                   key={player.id}
-                  className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 ${
-                    isCurrent
+                  className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-200 ${isCurrent
                       ? "border-[#FF6562]/50 bg-linear-to-br from-white to-[#FCECE9]/40 shadow-xs"
                       : "border-gray-200/80 bg-white"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       {/* Avatar */}
                       <div
-                        className={`relative flex h-12 w-12 items-center justify-center rounded-2xl font-black text-sm shadow-xs ${
-                          isPlayerHost
+                        className={`relative flex h-12 w-12 items-center justify-center rounded-2xl font-black text-sm shadow-xs ${isPlayerHost
                             ? "bg-linear-to-tr from-amber-400 to-amber-500 text-white"
                             : "bg-linear-to-tr from-[#FF6562] to-[#FFA194] text-white"
-                        }`}
+                          }`}
                       >
                         {playerName.charAt(0).toUpperCase()}
 
@@ -510,11 +519,10 @@ function SingleRoomLobbyRoute() {
                     isReady ? "Marked as Not Ready" : "You are READY!",
                   );
                 }}
-                className={`w-full h-11 rounded-xl text-xs font-black cursor-pointer transition ${
-                  isReady
+                className={`w-full h-11 rounded-xl text-xs font-black cursor-pointer transition ${isReady
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 <UserCheck className="h-4 w-4 mr-1.5" />
                 {isReady ? "Ready for Battle!" : "Click to Ready Up"}
@@ -528,7 +536,8 @@ function SingleRoomLobbyRoute() {
                   toast.success("Starting match session! Launching game...");
                   handleStartGame();
                 }}
-                className="w-full h-12 rounded-2xl bg-[#FF6562] hover:bg-[#fa534f] text-white font-black text-xs shadow-md shadow-red-200 cursor-pointer"
+                disabled={!isCanStart}
+                className={`${isCanStart?"":"cursor-not-allowed"} w-full h-12 rounded-2xl bg-[#FF6562] hover:bg-[#fa534f] text-white font-black text-xs shadow-md shadow-red-200 cursor-pointer`}
               >
                 <Play className="h-4 w-4 mr-2 fill-white" />
                 Start Match

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import Bingo from "./bingo/bingo";
 import ClickRace from "./click-race/click-race";
 import { TicTacToe } from "./tic-tac-toe/tic-tak-toe";
+import { TypingRace } from "./typing-race/typing-race";
 
 interface GameWrapperProps {
   gameId: string;
@@ -24,6 +25,9 @@ const GameWrapper = ({ gameId, roomId }: GameWrapperProps) => {
       )}
       {(gameName === "tic tac toe" || gameName === "tic-tac-toe") && (
         <TicTacToe roomId={roomId} />
+      )}
+      {(gameName === "typing race" || gameName === "typing-race") && (
+        <TypingRace roomId={roomId} />
       )}
     </div>
   );
