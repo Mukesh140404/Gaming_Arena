@@ -2,11 +2,13 @@ import type { GameEngine } from "./types";
 import { clickRace } from "./click-race";
 import { ticTacToe } from "./tic-tac-toe";
 import { bingo } from "./bingo";
+import { typingRace } from "./typing-race";
 
 const engines: Record<string, GameEngine> = {
   [clickRace.id]: clickRace,
   [ticTacToe.id]: ticTacToe,
-  [bingo.id]: bingo
+  [bingo.id]: bingo,
+  [typingRace.id]: typingRace,
 };
 
 const normalize = (value: string) =>
