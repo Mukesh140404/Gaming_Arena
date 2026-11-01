@@ -3,7 +3,7 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "module": "CommonJS",
-    "moduleResolution": "node10",
+    "moduleResolution": "NodeNext",
     "target": "ES2022",
     "types": [
       "node"

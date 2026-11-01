@@ -74,39 +74,6 @@ export const GameHeader: React.FC<RaceHeaderProps> = ({
           </Button>
         </div>
       </div>
-
-      {/* Metrics Row: Timer + CPS Meter + Target */}
-      {/* <div className="grid grid-cols-3 gap-2 sm:gap-3 text-center">
-        
-        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex flex-col items-center justify-center">
-          <span className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1">
-            <Timer className="h-3 w-3 text-gray-500" /> Time
-          </span>
-          <span className="text-lg sm:text-xl font-mono font-black text-gray-900">
-            {seconds}s
-          </span>
-        </div>
-
-        
-        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex flex-col items-center justify-center">
-          <span className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1">
-            <Gauge className="h-3 w-3 text-rose-500" /> Speed (CPS)
-          </span>
-          <span className="text-lg sm:text-xl font-mono font-black text-rose-600">
-            {cps.toFixed(1)}
-          </span>
-        </div>
-
-        
-        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex flex-col items-center justify-center">
-          <span className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1">
-            <Trophy className="h-3 w-3 text-amber-500" /> Finish Line
-          </span>
-          <span className="text-lg sm:text-xl font-mono font-black text-amber-600">
-            {targetClicks} pts
-          </span>
-        </div>
-      </div> */}
     </div>
   );
 };

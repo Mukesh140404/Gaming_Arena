@@ -4,6 +4,7 @@ import Bingo from "./bingo/bingo";
 import ClickRace from "./click-race/click-race";
 import { TicTacToe } from "./tic-tac-toe/tic-tak-toe";
 import { TypingRace } from "./typing-race/typing-race";
+import { RockPaperScissor } from "./rock-paper-scissors";
 
 interface GameWrapperProps {
   gameId: string;
@@ -29,6 +30,11 @@ const GameWrapper = ({ gameId, roomId }: GameWrapperProps) => {
       {(gameName === "typing race" || gameName === "typing-race") && (
         <TypingRace roomId={roomId} />
       )}
+      {(
+        gameName === "rock paper scissor" || gameName === "rock-paper-scissor") && (
+          <RockPaperScissor roomId={roomId}/>
+        )
+      }
     </div>
   );
 };
