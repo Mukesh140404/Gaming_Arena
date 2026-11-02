@@ -30,11 +30,10 @@ const GameWrapper = ({ gameId, roomId }: GameWrapperProps) => {
       {(gameName === "typing race" || gameName === "typing-race") && (
         <TypingRace roomId={roomId} />
       )}
-      {(
-        gameName === "rock paper scissor" || gameName === "rock-paper-scissor") && (
-          <RockPaperScissor roomId={roomId}/>
-        )
-      }
+      {(gameName.includes("rock") ||
+        (game.slug && game.slug.toLowerCase().includes("rock"))) && (
+        <RockPaperScissor roomId={roomId} />
+      )}
     </div>
   );
 };

@@ -1,151 +1,191 @@
-// import type { GameEngine } from "./types";
+import type { GameEngine } from "./types.js";
 
-// type State = {
-//     players: {
-//         [playerId: string]: {
-//             choice: Choice | null,
-//             score: number
-//         }
-//     }
-// }
-// type Choice = "rock" | "paper" | "scissor"
+export type Choice = "rock" | "paper" | "scissors";
 
-// type Action = { type: "CHOOSE", choice: Choice }
-
-// export const RockPaperScissors: GameEngine<State, Action> = {
-//     id: "rockpaperscissors",
-//     name: "Rock Paper Scissors",
-//     minPlayers: 2,
-//     maxPlayers: 2,
-
-//     createInitialState: (playerIds) => ({
-//         players: Object.fromEntries(
-//             playerIds.map((playerId) => [
-//                 playerId,
-//                 {
-//                     choice: null,
-//                     score: 0
-//                 }
-//             ])
-//         )
-
-//     }),
-
-//     applyAction: (state, playerId, action) => {
-//         if (action.type !== "CHOOSE") throw new Error("Unknown action");
-//         if (action.choice !== "rock" && action.choice !== "paper" && action.choice !== "scissor") {
-//             throw new Error("Unknown Choice")
-//         }
-//         if (!state.players[playerId]) throw new Error("this is not valid player")
-//         state.players[playerId].choice = action.choice
-
-//         return { ...state}
-
-//     },
-
-//     getResult: (state) => {
-
-//     }
-// }
-
-import type { GameEngine } from "./types";
-
-type State = {
-    players: {
-        [playerId: string]: {
-            choice: Choice | null,
-            score: number
-        }
-    }
+export interface RPSPlayerState {
+  choice: Choice | null;
+  score: number;
+  hasChosen?: boolean;
 }
 
-type Choice = "rock" | "paper" | "scissor"
+export interface RoundResult {
+  roundNumber: number;
+  choices: Record<string, Choice>;
+  winnerId: string | null;
+  isDraw: boolean;
+}
 
-type Action = { type: "CHOOSE", choice: Choice }
+export interface RPSState {
+  players: Record<string, RPSPlayerState>;
+  playerIds: string[];
+  currentRound: number;
+  targetScore: number;
+  phase: "choosing" | "round-resolved";
+  lastRound: RoundResult | null;
+  history: RoundResult[];
+}
 
-export const RockPaperScissors: GameEngine<State, Action> = {
-    id: "rockpaperscissors",
-    name: "Rock Paper Scissors",
-    minPlayers: 2,
-    maxPlayers: 2,
+export type RPSAction =
+  | { type: "CHOOSE"; choice: "rock" | "paper" | "scissors" | "scissor" }
+  | { type: "NEXT_ROUND" }
+  | { type: "RESTART" };
 
-    createInitialState: (playerIds) => ({
-        players: Object.fromEntries(
-            playerIds.map((playerId) => [
-                playerId,
-                {
-                    choice: null,
-                    score: 0
-                }
-            ])
-        )
-    }),
+const normalizeChoice = (c: string): Choice => {
+  if (c === "scissor" || c === "scissors") return "scissors";
+  if (c === "rock") return "rock";
+  if (c === "paper") return "paper";
+  throw new Error(`Invalid choice: ${c}`);
+};
 
-    applyAction: (state, playerId, action) => {
-        if (action.type !== "CHOOSE") {
-            throw new Error("Unknown action");
-        }
+export const RockPaperScissors: GameEngine<RPSState, RPSAction> = {
+  id: "rockpaperscissors",
+  name: "Rock Paper Scissors",
+  minPlayers: 2,
+  maxPlayers: 2,
 
-        if (
-            action.choice !== "rock" &&
-            action.choice !== "paper" &&
-            action.choice !== "scissor"
-        ) {
-            throw new Error("Unknown Choice");
-        }
+  createInitialState: (playerIds: string[]): RPSState => ({
+    players: Object.fromEntries(
+      playerIds.map((id) => [
+        id,
+        {
+          choice: null,
+          score: 0,
+          hasChosen: false,
+        },
+      ])
+    ),
+    playerIds,
+    currentRound: 1,
+    targetScore: 3,
+    phase: "choosing",
+    lastRound: null,
+    history: [],
+  }),
 
-        if (!state.players[playerId]) {
-            throw new Error("This is not a valid player");
-        }
-
-        state.players[playerId].choice = action.choice;
-
-        const playerIds = Object.keys(state.players);
-
-        if (playerIds.every(id => state.players[id].choice !== null)) {
-            const result = RockPaperScissors.getResult(state);
-
-            if (result?.winnerId) {
-                state.players[result.winnerId].score += 1;
-            }
-
-            for (const id of playerIds) {
-                state.players[id].choice = null;
-            }
-        }
-
-        return { ...state };
-    },
-
-    getResult: (state) => {
-        const playerIds = Object.keys(state.players);
-
-        if (playerIds.length !== 2) {
-            return null;
-        }
-
-        const player1 = state.players[playerIds[0]];
-        const player2 = state.players[playerIds[1]];
-
-        if (player1.choice === null || player2.choice === null) {
-            return null;
-        }
-
-        if (player1.choice === player2.choice) {
-            return {
-                winnerId: null,
-                draw: true
-            };
-        }
-
-        const player1Wins =
-            (player1.choice === "rock" && player2.choice === "scissor") ||
-            (player1.choice === "paper" && player2.choice === "rock") ||
-            (player1.choice === "scissor" && player2.choice === "paper");
-
-        return {
-            winnerId: player1Wins ? playerIds[0] : playerIds[1],
-            draw: false
-        };
+  applyAction: (state, playerId, action) => {
+    if (!state.playerIds.includes(playerId)) {
+      throw new Error("This is not a valid player for this match");
     }
+
+    // Check if match already has an overall winner
+    const currentWinner = RockPaperScissors.getResult(state);
+    if (currentWinner && action.type !== "RESTART") {
+      throw new Error("Game has already concluded");
+    }
+
+    if (action.type === "RESTART") {
+      return RockPaperScissors.createInitialState(state.playerIds);
+    }
+
+    if (action.type === "NEXT_ROUND") {
+      if (state.phase === "round-resolved") {
+        for (const id of state.playerIds) {
+          state.players[id].choice = null;
+        }
+        state.currentRound += 1;
+        state.phase = "choosing";
+      }
+      return { ...state };
+    }
+
+    if (action.type === "CHOOSE") {
+      const choice = normalizeChoice(action.choice);
+
+      // If we are currently in round-resolved, automatically transition to next round with this choice
+      if (state.phase === "round-resolved") {
+        for (const id of state.playerIds) {
+          state.players[id].choice = null;
+        }
+        state.currentRound += 1;
+        state.phase = "choosing";
+      }
+
+      state.players[playerId].choice = choice;
+
+      // Check if both players have made their choices
+      const allChosen = state.playerIds.every(
+        (id) => state.players[id].choice !== null
+      );
+
+      if (allChosen) {
+        const [p1, p2] = state.playerIds;
+        const c1 = state.players[p1].choice!;
+        const c2 = state.players[p2].choice!;
+
+        let winnerId: string | null = null;
+        let isDraw = false;
+
+        if (c1 === c2) {
+          isDraw = true;
+        } else if (
+          (c1 === "rock" && c2 === "scissors") ||
+          (c1 === "paper" && c2 === "rock") ||
+          (c1 === "scissors" && c2 === "paper")
+        ) {
+          winnerId = p1;
+          state.players[p1].score += 1;
+        } else {
+          winnerId = p2;
+          state.players[p2].score += 1;
+        }
+
+        const roundResult: RoundResult = {
+          roundNumber: state.currentRound,
+          choices: {
+            [p1]: c1,
+            [p2]: c2,
+          },
+          winnerId,
+          isDraw,
+        };
+
+        state.lastRound = roundResult;
+        state.history = [...state.history, roundResult];
+        state.phase = "round-resolved";
+      }
+
+      return { ...state };
+    }
+
+    throw new Error("Unknown action type");
+  },
+
+  getResult: (state) => {
+    if (state.playerIds.length < 2) return null;
+
+    for (const id of state.playerIds) {
+      if (state.players[id].score >= state.targetScore) {
+        return {
+          winnerId: id,
+          draw: false,
+        };
+      }
+    }
+
+    return null;
+  },
+
+  getPlayerView: (state, playerId) => {
+    const maskedPlayers: Record<
+      string,
+      { choice: Choice | null; score: number; hasChosen: boolean }
+    > = {};
+
+    for (const id of state.playerIds) {
+      const isSelf = id === playerId;
+      const player = state.players[id];
+      maskedPlayers[id] = {
+        score: player.score,
+        hasChosen: player.choice !== null,
+        // Only reveal the opponent's choice once the round has resolved
+        choice:
+          isSelf || state.phase === "round-resolved" ? player.choice : null,
+      };
+    }
+
+    return {
+      ...state,
+      players: maskedPlayers,
+    };
+  },
 };
