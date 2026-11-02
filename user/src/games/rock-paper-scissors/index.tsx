@@ -1,4 +1,3 @@
-
 interface GameProps {
     roomId? : string
 }
