@@ -85,7 +85,7 @@ function SingleRoomLobbyRoute() {
         to: "/dashboard",
       });
     }
-  }, [room]);
+  }, [room, navigate]);
 
   useEffect(() => {
     if (id && connected) {
@@ -95,17 +95,18 @@ function SingleRoomLobbyRoute() {
       });
     }
   }, [id, connected, sendMessage]);
+
   useEffect(() => {
-    if (!isGameStarted) {
-      setShowGame(false);
-      return;
-    }
+    if (!isGameStarted) return;
 
     const timer = setTimeout(() => {
       setShowGame(true);
     }, 5000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setShowGame(false);
+    };
   }, [isGameStarted]);
 
   const handleCopyCode = () => {
