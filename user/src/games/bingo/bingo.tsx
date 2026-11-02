@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import winLines from "./config";
 import BingoHeader from "./bingo-header";
 import BingoLetters from "./bingo-letters";
@@ -52,7 +52,7 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
 
   // Everything below comes from the server
   const myBoard: number[] | null = gameState?.myBoard ?? null;
-  const calledNumbers: number[] = gameState?.calledNumbers ?? [];
+  const calledNumbers: number[] | undefined = gameState?.calledNumbers;
   const serverPhase: "setup" | "playing" = gameState?.phase ?? "setup";
   const isMyTurn = gameState?.turn === authUser?.id;
   const submitted = myBoard !== null;
@@ -71,10 +71,10 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
   }, [draft]);
   const placedCount = 25 - availableNumbers.length;
 
-  const submitBoard = () => {
+  const submitBoard = useCallback(() => {
     if (submitted) return;
     sendGameAction(roomId, { type: "SUBMIT_BOARD", board: fillBoard(draft) });
-  };
+  }, [submitted, sendGameAction, roomId, draft]);
 
   // 30 second countdown while arranging the board
   useEffect(() => {
@@ -89,7 +89,7 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
   // Time is over: auto-fill the rest and submit
   useEffect(() => {
     if (timeLeft === 0 && phase === "setup" && !submitted) submitBoard();
-  }, [timeLeft, phase, submitted]);
+  }, [timeLeft, phase, submitted, submitBoard]);
 
   // Setup phase: click assigns the next number, double click removes it
   const handleCellClick = (index: number) => {
@@ -132,7 +132,10 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
     setIsGameStarted(false);
   };
 
-  const markedNumbers = useMemo(() => new Set(calledNumbers), [calledNumbers]);
+  const markedNumbers = useMemo(
+    () => new Set(calledNumbers ?? []),
+    [calledNumbers],
+  );
   const boardToShow: (number | null)[] = myBoard ?? draft;
 
   const { completedLinesCount, winningCells } = useMemo(() => {

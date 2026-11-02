@@ -97,13 +97,18 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
     focusInput();
   }, [focusInput, disabled]);
 
-  // Reset internal state when targetText changes
-  useEffect(() => {
+  const [prevTargetText, setPrevTargetText] = useState(targetText);
+  if (prevTargetText !== targetText) {
+    setPrevTargetText(targetText);
     setTypedText("");
     setStreak(0);
     setTotalKeystrokes(0);
     setErrorCount(0);
     setHasError(false);
+  }
+
+  // Refocus input and reset word log ref when targetText changes
+  useEffect(() => {
     lastLoggedWordCountRef.current = 0;
     focusInput();
   }, [targetText, focusInput]);

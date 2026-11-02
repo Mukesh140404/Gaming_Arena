@@ -28,6 +28,25 @@ interface TypingRaceProps {
   roomId?: string;
 }
 
+const createInitialBots = (): TypingRacer[] => {
+  return DEFAULT_AI_BOTS.slice(0, 3).map((bot, idx) => {
+    const carConfig = CAR_CONFIGS[(idx + 1) % CAR_CONFIGS.length];
+    return {
+      ...bot,
+      score: 0,
+      wpm: 0,
+      accuracy: 96 + Math.round(Math.random() * 3),
+      isSelf: false,
+      color: bot.color,
+      accentHex: bot.accentHex,
+      avatar: bot.avatar,
+      carImage: bot.carImage || carConfig.image,
+      rotateCar: bot.rotateCar ?? carConfig.rotate180,
+      rank: idx + 2,
+    };
+  });
+};
+
 export const TypingRace: React.FC<TypingRaceProps> = ({
   roomId: propRoomId,
 }) => {
@@ -77,42 +96,20 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Bot Racers for solo / demo mode
-  const [botRacers, setBotRacers] = useState<TypingRacer[]>([]);
+  const [botRacers, setBotRacers] = useState<TypingRacer[]>(() =>
+    isMultiplayer ? [] : createInitialBots()
+  );
+  const [prevIsMultiplayer, setPrevIsMultiplayer] = useState(isMultiplayer);
+  if (prevIsMultiplayer !== isMultiplayer) {
+    setPrevIsMultiplayer(isMultiplayer);
+    setBotRacers(isMultiplayer ? [] : createInitialBots());
+  }
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const botIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Game completion state
   const isGameOver = Boolean(gameResult?.winnerId) || myProgress >= 100;
-
-  // Initialize 3 bots for demo / solo practice (so total racers = 4)
-  const initBotRacers = useCallback(() => {
-    const bots: TypingRacer[] = DEFAULT_AI_BOTS.slice(0, 3).map((bot, idx) => {
-      const carConfig = CAR_CONFIGS[(idx + 1) % CAR_CONFIGS.length];
-      return {
-        ...bot,
-        score: 0,
-        wpm: 0,
-        accuracy: 96 + Math.round(Math.random() * 3),
-        isSelf: false,
-        color: bot.color,
-        accentHex: bot.accentHex,
-        avatar: bot.avatar,
-        carImage: bot.carImage || carConfig.image,
-        rotateCar: bot.rotateCar ?? carConfig.rotate180,
-        rank: idx + 2,
-      };
-    });
-    setBotRacers(bots);
-  }, []);
-
-  useEffect(() => {
-    if (!isMultiplayer) {
-      initBotRacers();
-    } else {
-      setBotRacers([]);
-    }
-  }, [isMultiplayer, initBotRacers]);
 
   // Restart match
   const handleRestart = useCallback(() => {
@@ -128,9 +125,9 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
     if (isMultiplayer && effectiveRoomId) {
       startGame(effectiveRoomId);
     } else {
-      initBotRacers();
+      setBotRacers(createInitialBots());
     }
-  }, [isMultiplayer, effectiveRoomId, startGame, initBotRacers]);
+  }, [isMultiplayer, effectiveRoomId, startGame]);
 
   // Elapsed time stopwatch
   useEffect(() => {
