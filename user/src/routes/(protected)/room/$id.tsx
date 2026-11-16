@@ -26,25 +26,19 @@ import {
   useDestroyRoomMutation,
   useUpdateRoomMutation,
 } from "@/hooks/useRoom";
-import { currentUserQueryOptions, useCurrentUser } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { onLeaveRoomLobby } from "@/lib/utils";
 import { RoomMessageBox } from "@/components/room/room-message-box";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocket, resetRoomSession } from "@/hooks/useWebSocket";
 import GameWrapper from "@/games/game-wrapper";
 
 export const Route = createFileRoute("/(protected)/room/$id")({
   component: SingleRoomLobbyRoute,
-  onLeave: async ({ params, context }) => {
-    const roomId = params.id;
-    const user = await context.queryClient.ensureQueryData(
-      currentUserQueryOptions,
-    );
-    console.log("user", user);
-    await onLeaveRoomLobby(roomId, user.id);
+  onLeave: () => {
+    resetRoomSession();
   },
 });
 
@@ -89,17 +83,24 @@ function SingleRoomLobbyRoute() {
     }
   }, [id, connected, sendMessage]);
   useEffect(() => {
-    if (!isGameStarted) {
+    const isRunning = isGameStarted || room?.status === "started";
+    if (!isRunning) {
       setShowGame(false);
+      return;
+    }
+
+    // If game was already running (e.g. page refresh), show game immediately
+    if (room?.status === "started" && !isGameStarted) {
+      setShowGame(true);
       return;
     }
 
     const timer = setTimeout(() => {
       setShowGame(true);
-    }, 5000);
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, [isGameStarted]);
+  }, [isGameStarted, room?.status]);
 
   const handleCopyCode = () => {
     if (!room?.roomCode) return;
@@ -200,7 +201,9 @@ function SingleRoomLobbyRoute() {
     );
   }
 
-  if (isGameStarted && !showGame) {
+  const isGameActive = isGameStarted || room.status === "started";
+
+  if (isGameActive && !showGame) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -225,14 +228,14 @@ function SingleRoomLobbyRoute() {
             }}
             className="text-sm text-muted-foreground"
           >
-            Game starting...
+            Entering match session...
           </motion.div>
         </div>
       </div>
     );
   }
 
-  if (isGameStarted && showGame) {
+  if (isGameActive && showGame) {
     return (
       <GameWrapper
         gameId={room.gameId}

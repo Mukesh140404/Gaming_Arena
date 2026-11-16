@@ -139,67 +139,68 @@ const joinRoom = asyncHandler(async (req: Request, res: Response) => {
       ? await comparePassword(password, existingRoom.passwordHash)
       : false;
 
-  const activePlayers = await db
-    .select()
-    .from(roomPlayers)
-    .where(
-      and(
-        eq(roomPlayers.roomId, existingRoom.id),
-        eq(roomPlayers.status, "active"),
-      ),
-    );
-
-  if (activePlayers.length >= existingRoom.maxPlayers) {
-    throw new ApiError(400, "Room is full");
-  }
-
   if (existingRoom.visibility === "private" && !isPasswordValid) {
     throw new ApiError(401, "Invalid password");
   }
-  const [existingPlayer] = await db
-    .select()
-    .from(roomPlayers)
-    .where(
-      and(
-        eq(roomPlayers.roomId, existingRoom.id),
-        eq(roomPlayers.userId, userId),
-      ),
-    );
 
-  if (existingPlayer) {
-    if (existingPlayer.status === "active") {
-      throw new ApiError(400, "User is already in a room");
-    } else {
-      const [updatedPlayer] = await db
-        .update(roomPlayers)
-        .set({
-          status: "active",
-          joinedAt: new Date(),
-          leftAt: null,
-        })
-        .where(eq(roomPlayers.id, existingPlayer.id))
-        .returning();
-      return res
-        .status(200)
-        .json(
-          new ApiResponse(200, updatedPlayer, "User joined room successfully"),
-        );
+  const resultPlayer = await db.transaction(async (tx) => {
+    const activePlayers = await tx
+      .select()
+      .from(roomPlayers)
+      .where(
+        and(
+          eq(roomPlayers.roomId, existingRoom.id),
+          eq(roomPlayers.status, "active"),
+        ),
+      );
+
+    if (activePlayers.length >= existingRoom.maxPlayers) {
+      throw new ApiError(400, "Room is full");
     }
-  }
 
-  const [createdPlayer] = await db
-    .insert(roomPlayers)
-    .values({
-      roomId: existingRoom.id,
-      userId: userId,
-      role: "player",
-      status: "active",
-    })
-    .returning();
+    const [existingPlayer] = await tx
+      .select()
+      .from(roomPlayers)
+      .where(
+        and(
+          eq(roomPlayers.roomId, existingRoom.id),
+          eq(roomPlayers.userId, userId),
+        ),
+      );
+
+    if (existingPlayer) {
+      if (existingPlayer.status === "active") {
+        throw new ApiError(400, "User is already in a room");
+      } else {
+        const [updatedPlayer] = await tx
+          .update(roomPlayers)
+          .set({
+            status: "active",
+            joinedAt: new Date(),
+            leftAt: null,
+          })
+          .where(eq(roomPlayers.id, existingPlayer.id))
+          .returning();
+        return updatedPlayer;
+      }
+    }
+
+    const [createdPlayer] = await tx
+      .insert(roomPlayers)
+      .values({
+        roomId: existingRoom.id,
+        userId: userId,
+        role: "player",
+        status: "active",
+      })
+      .returning();
+
+    return createdPlayer;
+  });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, createdPlayer, "User joined room successfully"));
+    .json(new ApiResponse(200, resultPlayer, "User joined room successfully"));
 });
 
 const leaveRoom = asyncHandler(async (req: Request, res: Response) => {

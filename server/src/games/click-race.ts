@@ -16,15 +16,26 @@ export const clickRace: GameEngine<State, Action> = {
     },
 
     applyAction: (state, playerId, action) => {
-        if (action.type !== "click") throw new Error("Invalid action type")
-        const newState = { scores: { ...state.scores, [playerId]: state.scores[playerId] + 1 } }
-        return newState
+        if (action.type !== "click") throw new Error("Invalid action type");
+        const currentScore = state.scores[playerId] ?? 0;
+        return {
+            scores: {
+                ...state.scores,
+                [playerId]: currentScore + 1,
+            },
+        };
     },
 
     getResult: (state) => {
-        for (const playerId in state.scores) {
-            if (state.scores[playerId] >= 10) return { winnerId: playerId }
+        let topWinner: string | null = null;
+        let topScore = 9;
+        for (const [playerId, score] of Object.entries(state.scores)) {
+            if (score >= 10 && score > topScore) {
+                topScore = score;
+                topWinner = playerId;
+            }
         }
-        return null
+        if (topWinner) return { winnerId: topWinner };
+        return null;
     }
 }

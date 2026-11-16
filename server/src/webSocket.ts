@@ -50,17 +50,25 @@ const token = url.searchParams.get("token") || cookieToken;
     }
     const ClientConnectionId = ConnectTheClient(webSocket, userId);
 
+    webSocket.on("error", (err) => {
+      console.error(`WebSocket client error [${ClientConnectionId}]:`, err.message);
+    });
+
     webSocket.on("message", (data) => {
-      // const rawData = JSON.parse(data.toString());
       let rawData: any;
-  try {
-    rawData = JSON.parse(data.toString());
-  } catch {
-    return; // Ignore invalid JSON
-  }
+      try {
+        rawData = JSON.parse(data.toString());
+      } catch {
+        return; // Ignore invalid JSON
+      }
       const messageType = rawData.type;
 
       switch (messageType) {
+        case "PING":
+          if (webSocket.readyState === WebSocket.OPEN) {
+            webSocket.send(JSON.stringify({ type: "PONG" }));
+          }
+          break;
         case "JOIN_ROOM":
           joinRoom(ClientConnectionId, rawData.roomId);
           break;
@@ -82,11 +90,19 @@ const token = url.searchParams.get("token") || cookieToken;
           console.log("Invalid case to handle");
       }
     });
+
     webSocket.on("close", () => {
       console.log(`Client ${ClientConnectionId} is disconnected`);
       handleUserDisconnect(ClientConnectionId, webSocket);
       wsServer.clients.forEach((client) => {
-        client.send(`Client ${ClientConnectionId} is disconnected`);
+        if (client !== webSocket && client.readyState === WebSocket.OPEN) {
+          client.send(
+            JSON.stringify({
+              type: "client-disconnected",
+              connectionId: ClientConnectionId,
+            })
+          );
+        }
       });
     });
   });

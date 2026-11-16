@@ -7,7 +7,8 @@ import BingoControls from "./bingo-controls";
 import BingoWinModal from "./bingo-win-modal";
 import { useCurrentUser } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
-import { useUpdateRoomMutation } from "@/hooks/useRoom";
+import { singleRoomQueryOptions, useUpdateRoomMutation } from "@/hooks/useRoom";
+import { useQuery } from "@tanstack/react-query";
 import BingoFinalBoards from "./bingo-final-boards";
 
 interface BingoProps {
@@ -45,6 +46,7 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
   const { data: authUser } = useCurrentUser();
 
   const roomId = propRoomId || wsRoomId;
+  const { data: room } = useQuery(singleRoomQueryOptions(roomId));
   const updateRoomMutation = useUpdateRoomMutation(roomId);
   // Local draft board, only used while arranging numbers in the setup phase
   const [draft, setDraft] = useState<(number | null)[]>(Array(25).fill(null));
@@ -116,12 +118,14 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
   };
 
   const handleGameStatusChange = async () => {
-    try {
-      await updateRoomMutation.mutateAsync({
-        roomId: roomId,
-        status: "waiting",
-      });
-    } catch {}
+    if (room?.hostId === authUser?.id) {
+      try {
+        await updateRoomMutation.mutateAsync({
+          roomId: roomId,
+          status: "waiting",
+        });
+      } catch {}
+    }
   };
 
   const handleBackToRoom = () => {

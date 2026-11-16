@@ -92,7 +92,8 @@ export const bingo: GameEngine<State, Action> = {
         throw new Error("Number already called");
       }
 
-      const nextTurn = state.players.find((p) => p !== playerId)!;
+      const otherPlayer = state.players.find((p) => p !== playerId);
+      const nextTurn = otherPlayer ?? playerId;
       return {
         ...state,
         calledNumbers: [...state.calledNumbers, action.number],

@@ -47,7 +47,8 @@ export const ticTacToe: GameEngine<State, Action> = {
     const board = [...state.board];
     board[action.index] = playerId;
 
-    const nextTurn = state.players.find((p) => p !== playerId)!;
+    const otherPlayer = state.players.find((p) => p !== playerId);
+    const nextTurn = otherPlayer ?? playerId;
 
     return { ...state, board, turn: nextTurn };
   },

@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Mail, Eye, EyeOff, User } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLogin, useSignup } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import LoginImage from "@/assets/login.webp";
 
 export const Route = createFileRoute("/(auth)/auth")({
@@ -32,6 +33,10 @@ function RouteComponent() {
   };
   const SignUpHandler = (e: React.FormEvent) => {
     e.preventDefault();
+    if (signupPassword !== signupConfirmPassword) {
+      toast.error("Passwords do not match. Please verify your confirm password.");
+      return;
+    }
     signupMutation.mutate({
       email: signupEmail,
       passwordHash: signupPassword,

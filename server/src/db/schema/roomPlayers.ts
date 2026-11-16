@@ -23,7 +23,7 @@ export const roomPlayers = pgTable("room_players", {
 
   roomId: uuid("room_id")
     .notNull()
-    .references(() => rooms.id),
+    .references(() => rooms.id, { onDelete: "cascade" }),
 
   userId: uuid("user_id")
     .notNull()

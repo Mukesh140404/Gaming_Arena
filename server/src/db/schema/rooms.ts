@@ -28,7 +28,7 @@ export const rooms = pgTable("rooms", {
   roomCode: varchar("room_code", { length: 20 }).notNull().unique(),
   gameId: uuid("game_id")
     .notNull()
-    .references(() => games.id),
+    .references(() => games.id, { onDelete: "cascade" }),
   hostId: uuid("host_id")
     .notNull()
     .references(() => users.id),

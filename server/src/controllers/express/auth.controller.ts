@@ -11,25 +11,26 @@ import { ApiResponse } from "../../lib/ApiResponse";
 
 const signUp = asyncHandler(async (req: Request, res: Response) => {
   const parsedBody = userSignUpSchema.parse(req.body);
-  if (!parsedBody.email || !parsedBody.name || !parsedBody.passwordHash || !parsedBody.role) {
+  if (!parsedBody.email || !parsedBody.name || !parsedBody.passwordHash) {
     throw new ApiError(400, "All fields are required");
   }
   const [existingUser] = await db
     .select()
     .from(users)
-    .where(eq(users.email, parsedBody.email))
+    .where(eq(users.email, parsedBody.email));
   if (existingUser) {
     throw new ApiError(409, "User already exists");
   }
   const hashedPassword = await hashPassword(parsedBody.passwordHash);
 
+  // Security: Public signup must always create standard 'user' role
   const [createdUser] = await db
     .insert(users)
     .values({
       name: parsedBody.name,
       email: parsedBody.email,
       passwordHash: hashedPassword,
-      role: parsedBody.role
+      role: "user",
     })
     .returning();
 
