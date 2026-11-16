@@ -42,6 +42,7 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
     setIsGameStarted,
     finalState,
     setFinalState,
+    backToLobby,
   } = useWebSocket();
   const { data: authUser } = useCurrentUser();
 
@@ -77,6 +78,14 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
     if (submitted) return;
     sendGameAction(roomId, { type: "SUBMIT_BOARD", board: fillBoard(draft) });
   }, [submitted, sendGameAction, roomId, draft]);
+
+  // Reset draft and timer when a new game starts or returns to setup
+  useEffect(() => {
+    if (serverPhase === "setup" && !gameResult && myBoard === null) {
+      setTimeLeft(30);
+      setDraft(Array(25).fill(null));
+    }
+  }, [serverPhase, gameResult, myBoard]);
 
   // 30 second countdown while arranging the board
   useEffect(() => {
@@ -118,6 +127,9 @@ const Bingo: React.FC<BingoProps> = ({ roomId: propRoomId }) => {
   };
 
   const handleGameStatusChange = async () => {
+    if (roomId) {
+      backToLobby(roomId);
+    }
     if (room?.hostId === authUser?.id) {
       try {
         await updateRoomMutation.mutateAsync({

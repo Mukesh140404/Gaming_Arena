@@ -6,6 +6,7 @@ import {
   Share2,
   Check,
   ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CAR_CONFIGS, type TypingRacer } from "./config";
@@ -19,6 +20,7 @@ interface RaceWinModalProps {
   errorCount: number;
   onRestart: () => void;
   onNextQuote?: () => void;
+  onBackToRoom?: () => void;
 }
 
 export const RaceWinModal: React.FC<RaceWinModalProps> = ({
@@ -29,6 +31,7 @@ export const RaceWinModal: React.FC<RaceWinModalProps> = ({
   errorCount,
   onRestart,
   onNextQuote,
+  onBackToRoom,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -212,6 +215,17 @@ export const RaceWinModal: React.FC<RaceWinModalProps> = ({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 relative z-10">
+        {onBackToRoom && (
+          <Button
+            variant="outline"
+            onClick={onBackToRoom}
+            className="w-full sm:w-auto h-12 px-5 rounded-2xl border-gray-300 hover:bg-gray-50 text-gray-800 font-bold text-xs cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            <span>Back to Room</span>
+          </Button>
+        )}
+
         <Button
           onClick={onRestart}
           className="w-full sm:flex-1 h-12 rounded-2xl bg-[#FF6562] hover:bg-[#fa534f] text-white font-black text-xs shadow-md shadow-red-200 cursor-pointer"

@@ -6,6 +6,7 @@ import {
   leaveRoom,
   chatOnRoom,
   startGame,
+  resetRoomToLobby,
 } from "./controllers/websockets/room";
 import { broadCastMessage } from "./controllers/websockets/brodcast";
 import { gameAction, initGame } from "./controllers/websockets/game";
@@ -78,6 +79,10 @@ const token = url.searchParams.get("token") || cookieToken;
         case "START_GAME":
           startGame(rawData.roomId);
           initGame(rawData.roomId);
+          break;
+        case "BACK_TO_LOBBY":
+        case "RESET_ROOM":
+          resetRoomToLobby(ClientConnectionId, rawData.roomId);
           break;
         case "LEAVE_ROOM":
           leaveRoom(ClientConnectionId, rawData.roomId);

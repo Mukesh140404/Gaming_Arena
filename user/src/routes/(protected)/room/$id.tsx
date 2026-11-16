@@ -69,9 +69,21 @@ function SingleRoomLobbyRoute() {
   const [isReady, setIsReady] = useState(false);
   const [showGame, setShowGame] = useState(false);
 
-  const { connected, sendMessage, roomMessages, isGameStarted } =
-    useWebSocket();
+  const {
+    connected,
+    sendMessage,
+    roomMessages,
+    isGameStarted,
+    joinRoom: wsJoinRoom,
+    roomUpdatedTick,
+  } = useWebSocket();
   const currentRoomMessages = roomMessages.filter((m) => m.roomId === id);
+
+  useEffect(() => {
+    if (roomUpdatedTick) {
+      refetch();
+    }
+  }, [roomUpdatedTick, refetch]);
 
   useEffect(() => {
     if (room?.status === "finished") {
@@ -83,12 +95,18 @@ function SingleRoomLobbyRoute() {
 
   useEffect(() => {
     if (id && connected) {
-      sendMessage({
-        type: "JOIN_ROOM",
-        roomId: id,
-      });
+      wsJoinRoom(id);
     }
-  }, [id, connected, sendMessage]);
+  }, [id, connected, wsJoinRoom]);
+
+  useEffect(() => {
+    return () => {
+      if (id) {
+        sendMessage({ type: "LEAVE_ROOM", roomId: id });
+      }
+      resetRoomSession();
+    };
+  }, [id, sendMessage]);
 
   useEffect(() => {
     const isRunning = isGameStarted || room?.status === "started";
@@ -139,6 +157,7 @@ function SingleRoomLobbyRoute() {
   };
 
   const handleStartGame = async () => {
+    if (!isCanStart) return;
     try {
       await updateRoomMutation.mutateAsync({
         roomId: room?.id,
@@ -259,10 +278,11 @@ function SingleRoomLobbyRoute() {
   const players = room.roomPlayersList || [];
   const activePlayers = players.filter((p) => p.status === "active");
   const emptySlotsCount = Math.max(0, room.maxPlayers - activePlayers.length);
- const isCanStart =
-  !!game &&
-  !!room &&
-  (game.minPlayers ?? 0) <= (room.roomPlayersList?.length ?? 0);
+  const isCanStart =
+    !!game &&
+    !!room &&
+    (game.minPlayers ?? 0) <= activePlayers.length &&
+    activePlayers.length <= (room.maxPlayers ?? 0);
 
   return (
     <div className="space-y-6 pb-12">

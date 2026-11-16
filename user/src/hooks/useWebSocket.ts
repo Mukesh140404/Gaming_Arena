@@ -23,6 +23,7 @@ let sharedGameError: string | null = null;
 let sharedRoomMessages: RoomMessage[] = [];
 let sharedMessages: any[] = [];
 let sharedFinalState: any = null;
+let sharedRoomUpdatedTick = 0;
 
 type Subscriber = () => void;
 const subscribers = new Set<Subscriber>();
@@ -114,6 +115,18 @@ function initSharedSocket() {
           sharedGameError = null;
           break;
 
+        case "room-reset-to-lobby":
+          sharedIsGameStarted = false;
+          sharedGameState = null;
+          sharedGameResult = null;
+          sharedFinalState = null;
+          sharedGameError = null;
+          break;
+
+        case "room-updated":
+          sharedRoomUpdatedTick = Date.now();
+          break;
+
         case "game-state":
           sharedIsGameStarted = true; // Auto-restore on reconnect/refresh
           sharedGameState = data.state;
@@ -176,6 +189,7 @@ function initSharedSocket() {
 }
 
 export function resetRoomSession() {
+  sharedRoomId = "";
   sharedRoomMessages = [];
   sharedGameState = null;
   sharedGameResult = null;
@@ -273,6 +287,16 @@ export const useWebSocket = () => {
     [sendMessage],
   );
 
+  const backToLobby = useCallback(
+    (targetRoomId: string) => {
+      sendMessage({
+        type: "BACK_TO_LOBBY",
+        roomId: targetRoomId,
+      });
+    },
+    [sendMessage],
+  );
+
   const sendGameAction = useCallback(
     (targetRoomId: string, action: unknown) => {
       sendMessage({
@@ -344,6 +368,7 @@ export const useWebSocket = () => {
     gameError: sharedGameError,
     roomMessages: sharedRoomMessages,
     messages: sharedMessages,
+    roomUpdatedTick: sharedRoomUpdatedTick,
     sendMessage,
     resetRoomSession,
     finalState: sharedFinalState,
@@ -352,6 +377,7 @@ export const useWebSocket = () => {
     joinRoom,
     leaveRoom,
     startGame,
+    backToLobby,
     sendGameAction,
     sendRoomChat,
     sendBroadcastMessage,
