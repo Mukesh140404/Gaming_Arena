@@ -27,11 +27,11 @@ function RouteComponent() {
   const [showSignupConfirmPassword, setShowSignupConfirmPassword] =
     useState(false);
 
-  const LoginHandler = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate({ email: loginEmail, passwordHash: loginPassword });
   };
-  const SignUpHandler = (e: React.FormEvent) => {
+  const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
     if (signupPassword !== signupConfirmPassword) {
       toast.error("Passwords do not match. Please verify your confirm password.");
@@ -97,7 +97,7 @@ function RouteComponent() {
                     Login
                   </h1>
 
-                  <form onSubmit={LoginHandler} className="space-y-4">
+                  <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-gray-700">
                         Email
@@ -184,7 +184,7 @@ function RouteComponent() {
                     Sign Up
                   </h1>
 
-                  <form onSubmit={SignUpHandler} className="space-y-3.5">
+                  <form onSubmit={handleSignUp} className="space-y-3.5">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-700">
                         Username

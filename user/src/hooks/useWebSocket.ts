@@ -229,7 +229,7 @@ export const useWebSocket = () => {
   useEffect(() => {
     if (!currentUser) return;
     initSharedSocket();
-  }, [currentUser?.id]);
+  }, [currentUser]);
 
   const sendMessage = useCallback((data: object) => {
     if (sharedSocket?.readyState === WebSocket.OPEN) {
