@@ -3,6 +3,7 @@ import { db } from "../../db/index";
 import { roomPlayers } from "../../db/schema/roomPlayers";
 import { and, eq, ne } from "drizzle-orm";
 import { users } from "../../db/schema/users";
+import { handlePlayerDisconnectFromGame } from "./game";
 
 const connections = new Map<string, WebSocket>();
 
@@ -36,6 +37,7 @@ export const handleUserDisconnect = async (userId: string, socket: WebSocket) =>
 
     // Tell the remaining players (chat message + refetch trigger)
     await leaveRoom(userId, row.roomId);
+    handlePlayerDisconnectFromGame(row.roomId, userId);
     const others = await getActivePlayers(row.roomId);
     others.forEach((p) =>
       sendTo(p.userId, { type: "room-updated", roomId: row.roomId }),
@@ -74,10 +76,9 @@ export const getActivePlayers = (roomId: string) =>
     .where(and(eq(roomPlayers.roomId, roomId), eq(roomPlayers.status, "active")));
 
 export const joinRoom = async (userId: string, roomId: string) => {
-
   const players = await getActivePlayers(roomId);
-
   const user = await getUser(userId);
+  if (!user) return;
 
   players
     .filter((p) => p.userId !== userId)

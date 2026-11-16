@@ -26,9 +26,29 @@ let sharedFinalState: any = null;
 
 type Subscriber = () => void;
 const subscribers = new Set<Subscriber>();
+const pendingMessages: object[] = [];
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let isExplicitlyClosed = false;
 
 function notifySubscribers() {
   subscribers.forEach((sub) => sub());
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    if (sharedSocket?.readyState === WebSocket.OPEN) {
+      sharedSocket.send(JSON.stringify({ type: "PING" }));
+    }
+  }, 25000);
+}
+
+function stopHeartbeat() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
 }
 
 function initSharedSocket() {
@@ -44,6 +64,7 @@ function initSharedSocket() {
   const token = sessionStorage.getItem("wsToken");
   if (!token) return;
 
+  isExplicitlyClosed = false;
   const WS_URL = import.meta.env.VITE_WS_URL ?? "ws://localhost:4000";
 
   const socket = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
@@ -52,6 +73,19 @@ function initSharedSocket() {
   socket.onopen = () => {
     sharedConnected = true;
     console.log("WebSocket connected...");
+    startHeartbeat();
+
+    // Flush any pending messages that were queued while connecting
+    while (pendingMessages.length > 0) {
+      const msg = pendingMessages.shift();
+      if (msg) socket.send(JSON.stringify(msg));
+    }
+
+    // If we were already in a room, re-join it on reconnect
+    if (sharedRoomId) {
+      socket.send(JSON.stringify({ type: "JOIN_ROOM", roomId: sharedRoomId }));
+    }
+
     notifySubscribers();
   };
 
@@ -60,6 +94,9 @@ function initSharedSocket() {
       const data = JSON.parse(event.data);
 
       switch (data.type) {
+        case "PONG":
+          break; // Heartbeat acknowledged
+
         case "connection-id":
           sharedConnectionId = data.connectionId;
           break;
@@ -78,13 +115,13 @@ function initSharedSocket() {
           break;
 
         case "game-state":
+          sharedIsGameStarted = true; // Auto-restore on reconnect/refresh
           sharedGameState = data.state;
           break;
 
         case "game-ended":
           sharedGameResult = data.result;
           sharedFinalState = data.finalState ?? null;
-          // sharedIsGameStarted = false;
           break;
 
         case "game-error":
@@ -124,13 +161,38 @@ function initSharedSocket() {
   socket.onclose = () => {
     sharedConnected = false;
     sharedSocket = null;
+    stopHeartbeat();
     console.log("WebSocket disconnected (singleton)");
     notifySubscribers();
+
+    // Auto-reconnect after 2 seconds if not manually closed
+    if (!isExplicitlyClosed && !reconnectTimer) {
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        initSharedSocket();
+      }, 2500);
+    }
   };
+}
+
+export function resetRoomSession() {
+  sharedRoomMessages = [];
+  sharedGameState = null;
+  sharedGameResult = null;
+  sharedFinalState = null;
+  sharedGameError = null;
+  sharedIsGameStarted = false;
+  notifySubscribers();
 }
 
 // Call this on logout so the next login opens a fresh socket with the new token
 export function closeSharedSocket() {
+  isExplicitlyClosed = true;
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
+  stopHeartbeat();
   sharedSocket?.close();
   sharedSocket = null;
   sharedConnected = false;
@@ -172,6 +234,8 @@ export const useWebSocket = () => {
   const sendMessage = useCallback((data: object) => {
     if (sharedSocket?.readyState === WebSocket.OPEN) {
       sharedSocket.send(JSON.stringify(data));
+    } else if (sharedSocket?.readyState === WebSocket.CONNECTING) {
+      pendingMessages.push(data);
     } else {
       console.warn("WebSocket is not open. Unable to send:", data);
     }
@@ -281,6 +345,7 @@ export const useWebSocket = () => {
     roomMessages: sharedRoomMessages,
     messages: sharedMessages,
     sendMessage,
+    resetRoomSession,
     finalState: sharedFinalState,
     setFinalState: setFinalState,
     // Server linked functions

@@ -5,7 +5,8 @@ import { useCurrentUser } from "@/hooks/useAuth";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import type { BoardCell } from "./types";
 import ResultGameDialog from "@/components/dialogs/result-game.model";
-import { useUpdateRoomMutation } from "@/hooks/useRoom";
+import { singleRoomQueryOptions, useUpdateRoomMutation } from "@/hooks/useRoom";
+import { useQuery } from "@tanstack/react-query";
 
 interface TicTacToeProps {
   roomId?: string;
@@ -24,6 +25,7 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
   } = useWebSocket();
   const effectiveRoomId = propRoomId || wsRoomId;
   const { data: authUser } = useCurrentUser();
+  const { data: room } = useQuery(singleRoomQueryOptions(effectiveRoomId));
   const updateRoomMutation = useUpdateRoomMutation(effectiveRoomId);
 
   const cells = useMemo<BoardCell[]>(() => {
@@ -45,12 +47,14 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
   };
 
   const handleGameStatusChange = async () => {
-    try {
-      await updateRoomMutation.mutateAsync({
-        roomId: effectiveRoomId,
-        status: "waiting",
-      });
-    } catch {}
+    if (room?.hostId === authUser?.id) {
+      try {
+        await updateRoomMutation.mutateAsync({
+          roomId: effectiveRoomId,
+          status: "waiting",
+        });
+      } catch {}
+    }
   };
 
   const handleBackToRoom = () => {
