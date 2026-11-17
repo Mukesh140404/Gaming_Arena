@@ -28,6 +28,9 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
     gameError,
     sendGameAction,
     startGame,
+    backToLobby,
+    setGameResult,
+    setIsGameStarted,
   } = useWebSocket();
 
   const effectiveRoomId = propRoomId || wsRoomId;
@@ -220,6 +223,27 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
     ];
   }, [gameState, room, authUser]);
 
+  // Reset all race timers and metrics when rematch starts (gameResult cleared)
+  useEffect(() => {
+    if (!gameResult) {
+      setStartTime(null);
+      setElapsedTime(0);
+      setCurrentCps(0);
+      setPeakCps(0);
+      setComboCount(0);
+      clickTimestampsRef.current = [];
+      lastClickTimeRef.current = 0;
+    }
+  }, [gameResult]);
+
+  const handleBackToRoom = useCallback(() => {
+    if (effectiveRoomId) {
+      backToLobby(effectiveRoomId);
+    }
+    setGameResult(null);
+    setIsGameStarted(false);
+  }, [effectiveRoomId, backToLobby, setGameResult, setIsGameStarted]);
+
   // Current user's live score from server
   const myCurrentScore = useMemo(() => {
     if (!authUser?.id || !gameState?.scores) return 0;
@@ -275,6 +299,7 @@ export const ClickRace: React.FC<ClickRaceProps> = ({ roomId: propRoomId }) => {
           peakCps={peakCps}
           totalClicks={myCurrentScore}
           onRestart={handleRestart}
+          onBackToRoom={handleBackToRoom}
         />
       ) : (
         <ClickArea

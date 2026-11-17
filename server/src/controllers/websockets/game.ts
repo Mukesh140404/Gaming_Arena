@@ -28,6 +28,15 @@ const sendStateToPlayers = (
   });
 };
 
+export const sendGameSessionToPlayer = (roomId: string, userId: string) => {
+  const session = activeGames.get(roomId);
+  if (!session || !session.playerIds.includes(userId)) return;
+  const view = session.engine.getPlayerView
+    ? session.engine.getPlayerView(session.state, userId)
+    : session.state;
+  sendTo(userId, { type: "game-state", roomId, state: view });
+};
+
 export const initGame = async (roomId: string) => {
   const existing = activeGames.get(roomId);
   if (existing) {
@@ -54,6 +63,11 @@ export const initGame = async (roomId: string) => {
         message: `Cannot start match: Need at least ${engine.minPlayers} players, but only ${playerIds.length} joined.`,
       });
     }
+    // Revert room status back to waiting so it doesn't stay permanently stuck in started
+    db.update(rooms)
+      .set({ status: "waiting" })
+      .where(eq(rooms.id, roomId))
+      .catch((err) => console.error("Error reverting room status to waiting:", err));
     return;
   }
 
@@ -83,8 +97,13 @@ export const gameAction = async (
   roomId: string,
   action: unknown,
 ) => {
-  const session = activeGames.get(roomId);
+  let session = activeGames.get(roomId);
   if (!session) {
+    // If client requested RESTART after game ended, re-initialize the game session
+    if (action && typeof action === "object" && (action as any).type === "RESTART") {
+      await initGame(roomId);
+      return;
+    }
     sendTo(userId, {
       type: "game-error",
       roomId,
@@ -131,11 +150,11 @@ export const gameAction = async (
       finalState: newState,
     });
 
-    // Mark room as finished in DB so it doesn't linger as zombie
+    // Mark room as waiting in DB so it doesn't linger as 'started', allowing rematch or return to lobby
     db.update(rooms)
-      .set({ status: "finished", finishedAt: new Date() })
+      .set({ status: "waiting" })
       .where(eq(rooms.id, roomId))
-      .catch((err) => console.error("Error setting room status to finished:", err));
+      .catch((err) => console.error("Error setting room status to waiting:", err));
   }
 };
 
@@ -158,7 +177,7 @@ export const handlePlayerDisconnectFromGame = (roomId: string, disconnectedUserI
   });
 
   db.update(rooms)
-    .set({ status: "finished", finishedAt: new Date() })
+    .set({ status: "waiting" })
     .where(eq(rooms.id, roomId))
-    .catch((err) => console.error("Error updating finished status on forfeit:", err));
+    .catch((err) => console.error("Error updating waiting status on forfeit:", err));
 };

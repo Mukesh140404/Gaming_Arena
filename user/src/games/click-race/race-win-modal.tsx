@@ -1,5 +1,5 @@
 import React from "react";
-import { Trophy, RotateCcw, Timer, Gauge, Award } from "lucide-react";
+import { Trophy, RotateCcw, Timer, Gauge, Award, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface RaceWinModalProps {
@@ -9,6 +9,7 @@ interface RaceWinModalProps {
   peakCps: number;
   totalClicks: number;
   onRestart: () => void;
+  onBackToRoom?: () => void;
 }
 
 export const RaceWinModal: React.FC<RaceWinModalProps> = ({
@@ -18,6 +19,7 @@ export const RaceWinModal: React.FC<RaceWinModalProps> = ({
   peakCps,
   totalClicks,
   onRestart,
+  onBackToRoom,
 }) => {
   const seconds = (totalTime / 1000).toFixed(2);
 
@@ -70,8 +72,18 @@ export const RaceWinModal: React.FC<RaceWinModalProps> = ({
         </div>
       </div>
 
-      {/* Rematch Button */}
-      <div className="pt-2 flex justify-center">
+      {/* Rematch & Back to Lobby Buttons */}
+      <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        {onBackToRoom && (
+          <Button
+            variant="outline"
+            onClick={onBackToRoom}
+            className="h-11 px-6 rounded-xl border-gray-300 text-gray-700 hover:bg-gray-100 font-bold text-sm cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Room
+          </Button>
+        )}
         <Button
           onClick={onRestart}
           className="h-11 px-8 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm cursor-pointer shadow-lg shadow-rose-500/25"

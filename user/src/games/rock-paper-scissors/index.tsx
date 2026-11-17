@@ -29,6 +29,7 @@ export const RockPaperScissor: React.FC<RockPaperScissorProps> = ({
     setIsGameStarted,
     setGameState,
     setGameResult,
+    backToLobby,
   } = useWebSocket();
 
   const effectiveRoomId = propRoomId || wsRoomId;
@@ -143,6 +144,7 @@ export const RockPaperScissor: React.FC<RockPaperScissorProps> = ({
 
   const handleBackToRoom = async () => {
     if (effectiveRoomId) {
+      backToLobby(effectiveRoomId);
       try {
         await updateRoomMutation.mutateAsync({
           roomId: effectiveRoomId,

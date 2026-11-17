@@ -22,6 +22,7 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
     setIsGameStarted,
     setGameState,
     setGameResult,
+    backToLobby,
   } = useWebSocket();
   const effectiveRoomId = propRoomId || wsRoomId;
   const { data: authUser } = useCurrentUser();
@@ -47,6 +48,9 @@ export const TicTacToe: React.FC<TicTacToeProps> = ({ roomId: propRoomId }) => {
   };
 
   const handleGameStatusChange = async () => {
+    if (effectiveRoomId) {
+      backToLobby(effectiveRoomId);
+    }
     if (room?.hostId === authUser?.id) {
       try {
         await updateRoomMutation.mutateAsync({

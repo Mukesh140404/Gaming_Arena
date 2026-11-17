@@ -58,6 +58,9 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
     gameError,
     sendGameAction,
     startGame,
+    backToLobby,
+    setGameResult,
+    setIsGameStarted,
   } = useWebSocket();
 
   const effectiveRoomId = propRoomId || wsRoomId;
@@ -110,6 +113,28 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
 
   // Game completion state
   const isGameOver = Boolean(gameResult?.winnerId) || myProgress >= 100;
+
+  // Reset all race timers and metrics when rematch starts (gameResult cleared)
+  useEffect(() => {
+    if (!gameResult) {
+      setStartTime(null);
+      setElapsedTime(0);
+      setMyWpm(0);
+      setMyAccuracy(100);
+      setMyProgress(0);
+      setMyStreak(0);
+      setTotalKeystrokes(0);
+      setErrorCount(0);
+    }
+  }, [gameResult]);
+
+  const handleBackToRoom = useCallback(() => {
+    if (effectiveRoomId) {
+      backToLobby(effectiveRoomId);
+    }
+    setGameResult(null);
+    setIsGameStarted(false);
+  }, [effectiveRoomId, backToLobby, setGameResult, setIsGameStarted]);
 
   // Restart match
   const handleRestart = useCallback(() => {
@@ -356,6 +381,7 @@ export const TypingRace: React.FC<TypingRaceProps> = ({
           errorCount={errorCount}
           onRestart={handleRestart}
           onNextQuote={!isMultiplayer ? handleNextQuote : undefined}
+          onBackToRoom={isMultiplayer ? handleBackToRoom : undefined}
         />
       ) : (
         <TypingArea

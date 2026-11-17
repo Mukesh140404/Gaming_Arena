@@ -31,6 +31,25 @@ const createRoom = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(400, "Room already exists");
   }
 
+  const [targetGame] = await db
+    .select()
+    .from(games)
+    .where(eq(games.id, parsedBody.gameId));
+
+  if (!targetGame) {
+    throw new ApiError(404, "Game not found");
+  }
+
+  if (
+    parsedBody.maxPlayers < targetGame.minPlayers ||
+    parsedBody.maxPlayers > targetGame.maxPlayers
+  ) {
+    throw new ApiError(
+      400,
+      `Max players must be between ${targetGame.minPlayers} and ${targetGame.maxPlayers} for ${targetGame.name}`,
+    );
+  }
+
   const hostId = req.user?.id;
   const passwordHash = parsedBody.passwordHash
     ? await hashPassword(parsedBody.passwordHash)
